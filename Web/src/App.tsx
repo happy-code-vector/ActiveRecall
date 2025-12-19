@@ -1,38 +1,49 @@
 import { useState, useEffect } from 'react';
-import { SplashScreen } from './components/SplashScreen';
-import { AccountTypeScreen } from './components/AccountTypeScreen';
-import { UserTypeScreen } from './components/UserTypeScreen';
-import { GradeSelectionScreen } from './components/GradeSelectionScreen';
-import { GoalSelectionScreen } from './components/GoalSelectionScreen';
-import { MethodologyScreen } from './components/MethodologyScreen';
-import { TryItScreen } from './components/TryItScreen';
-import { NotificationPermissionScreen } from './components/NotificationPermissionScreen';
-import { HomeScreen } from './components/HomeScreen';
-import { AttemptGate } from './components/AttemptGate';
-import { EvaluationScreen } from './components/EvaluationScreen';
-import { AnswerScreen } from './components/AnswerScreen';
-import { ProgressScreen } from './components/ProgressScreen';
-import { HistoryScreen } from './components/HistoryScreen';
-import { PricingScreen } from './components/PricingScreen';
-import { ParentPlanDetails } from './components/ParentPlanDetails';
-import { ParentDashboard } from './components/ParentDashboard';
-import { GuardianSettings } from './components/GuardianSettings';
-import { LimitReachedModal } from './components/LimitReachedModal';
-import { ProfileScreen } from './components/ProfileScreen';
-import { ParentProfileScreen } from './components/ParentProfileScreen';
-import { TechniquesScreen } from './components/TechniquesScreen';
-import { AnimationShowcase } from './components/AnimationShowcase';
-import { LoginScreen } from './components/LoginScreen';
-import { SettingsScreen } from './components/SettingsScreen';
-import { ConnectParentScreen } from './components/ConnectParentScreen';
-import { AddStudentScreen } from './components/AddStudentScreen';
-import { UpgradePrompt } from './components/UpgradePrompt';
-import { DifficultyFrictionDemo } from './components/DifficultyFrictionDemo';
-import { WeeklyReportPreview } from './components/WeeklyReportPreview';
-import { NudgeNotificationBanner } from './components/NudgeNotificationBanner';
-import { FamilyLeaderboard } from './components/FamilyLeaderboard';
-import { BadgesScreen } from './components/BadgesScreen';
-import { BadgeUnlockModal } from './components/BadgeUnlockModal';
+// Onboarding
+import { SplashScreen } from './components/onboarding/SplashScreen';
+import { GradeSelectionScreen } from './components/onboarding/GradeSelectionScreen';
+import { GoalSelectionScreen } from './components/onboarding/GoalSelectionScreen';
+import { MethodologyScreen } from './components/onboarding/MethodologyScreen';
+import { TryItScreen } from './components/onboarding/TryItScreen';
+import { NotificationPermissionScreen } from './components/onboarding/NotificationPermissionScreen';
+// Auth
+import { AccountTypeScreen } from './components/auth/AccountTypeScreen';
+import { UserTypeScreen } from './components/auth/UserTypeScreen';
+import { LoginScreen } from './components/auth/LoginScreen';
+// Home
+import { HomeScreen } from './components/home/HomeScreen';
+// Learning
+import { AttemptGate } from './components/learning/AttemptGate';
+import { EvaluationScreen } from './components/learning/EvaluationScreen';
+import { AnswerScreen } from './components/learning/AnswerScreen';
+import { TechniquesScreen } from './components/learning/TechniquesScreen';
+// Progress
+import { ProgressScreen } from './components/progress/ProgressScreen';
+import { HistoryScreen } from './components/progress/HistoryScreen';
+// Pricing
+import { PricingScreen } from './components/pricing/PricingScreen';
+import { UpgradePrompt } from './components/pricing/UpgradePrompt';
+// Family
+import { ParentPlanDetails } from './components/family/ParentPlanDetails';
+import { ParentDashboard } from './components/family/ParentDashboard';
+import { GuardianSettings } from './components/family/GuardianSettings';
+import { AddStudentScreen } from './components/family/AddStudentScreen';
+import { FamilyLeaderboard } from './components/family/FamilyLeaderboard';
+// Profile
+import { ProfileScreen } from './components/profile/ProfileScreen';
+import { ParentProfileScreen } from './components/profile/ParentProfileScreen';
+import { SettingsScreen } from './components/profile/SettingsScreen';
+import { ConnectParentScreen } from './components/profile/ConnectParentScreen';
+// Badges
+import { BadgesScreen } from './components/badges/BadgesScreen';
+import { BadgeUnlockModal } from './components/badges/BadgeUnlockModal';
+// Shared
+import { LimitReachedModal } from './components/shared/LimitReachedModal';
+import { AnimationShowcase } from './components/shared/AnimationShowcase';
+import { DifficultyFrictionDemo } from './components/shared/DifficultyFrictionDemo';
+import { WeeklyReportPreview } from './components/shared/WeeklyReportPreview';
+import { NudgeNotificationBanner } from './components/shared/NudgeNotificationBanner';
+// Utils
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { getSubscriptionStatus, incrementQuestionCount, getQuestionsRemaining } from './utils/subscription';
 import { 
@@ -43,6 +54,7 @@ import {
   saveStreakFreezeState,
   type StreakFreezeState 
 } from './utils/streakFreeze';
+
 
 export type Screen = 'splash' | 'accountType' | 'userType' | 'gradeSelection' | 'goalSelection' | 'methodology' | 'tryIt' | 'notification' | 'home' | 'pricing' | 'parentPlanDetails' | 'parentDashboard' | 'guardianSettings' | 'attempt' | 'evaluation' | 'answer' | 'progress' | 'history' | 'profile' | 'techniques' | 'animations' | 'login' | 'settings' | 'connectParent' | 'addStudent' | 'frictionDemo' | 'weeklyReport' | 'leaderboard' | 'badges';
 
@@ -94,8 +106,8 @@ export default function App() {
   const [userId, setUserId] = useState('');
   const [upgradePromptFeature, setUpgradePromptFeature] = useState<'voice' | 'mastery' | 'coach' | 'badges' | 'stats' | 'questions' | null>(null);
   const [nudgeNotifications, setNudgeNotifications] = useState<NudgeNotification[]>([]);
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [streakFreezeState, setStreakFreezeState] = useState<StreakFreezeState | null>(null);
+  const [_isHydrated, setIsHydrated] = useState(false);
+  const [_streakFreezeState, setStreakFreezeState] = useState<StreakFreezeState | null>(null);
 
   // Hydrate state from localStorage on client
   useEffect(() => {
@@ -212,6 +224,7 @@ export default function App() {
     }
   };
 
+
   const startNewQuestion = (q: string) => {
     // Check if user has reached daily question limit
     const status = getSubscriptionStatus();
@@ -256,7 +269,7 @@ export default function App() {
             attempt: userAttempt,
             userId,
             masteryMode,
-            gradeLevel, // NEW: Send grade level to AI
+            gradeLevel,
           }),
         }
       );
@@ -306,13 +319,11 @@ export default function App() {
           }
         } catch (badgeError) {
           console.error('Error checking badges:', badgeError);
-          // Don't fail the evaluation if badge checking fails
         }
       }
     } catch (error) {
       console.error('Error evaluating attempt:', error);
       
-      // Determine user-friendly error message
       let errorMessage = 'We encountered an error evaluating your attempt.';
       let errorDetail = 'Please try again.';
       
@@ -328,7 +339,6 @@ export default function App() {
         }
       }
       
-      // Set error state
       setEvaluation({
         effort_score: 0,
         understanding_score: 0,
@@ -342,13 +352,11 @@ export default function App() {
   };
 
   const unlockAnswer = () => {
-    // Check if user is a free user and has reached the daily unlock limit
     if (!localStorage.getItem('thinkfirst_premium') && dailyUnlockCount >= 5) {
       setShowLimitModal(true);
       return;
     }
 
-    // Increment daily unlock count
     setDailyUnlockCount(prevCount => {
       const newCount = prevCount + 1;
       localStorage.setItem('thinkfirst_dailyUnlocks', JSON.stringify({
@@ -361,69 +369,25 @@ export default function App() {
     setCurrentScreen('answer');
   };
 
-  const goToProfile = () => {
-    console.log('App: Navigating to profile');
-    setCurrentScreen('profile');
-  };
+  const goToProfile = () => setCurrentScreen('profile');
+  const goHome = () => setCurrentScreen('home');
+  const goToPricing = () => setCurrentScreen('pricing');
+  const goToProgress = () => setCurrentScreen('progress');
+  const goToHistory = () => setCurrentScreen('history');
+  const goToTechniques = () => setCurrentScreen('techniques');
+  const goToSettings = () => setCurrentScreen('settings');
+  const goToParentDashboard = () => setCurrentScreen('parentDashboard');
+  const goToGuardianSettings = () => setCurrentScreen('guardianSettings');
+  const goToBadges = () => setCurrentScreen('badges');
 
-  const goHome = () => {
-    console.log('App: Navigating to home');
-    setCurrentScreen('home');
-  };
-
-  const goToPricing = () => {
-    console.log('App: Navigating to pricing');
-    setCurrentScreen('pricing');
-  };
-
-  const goToProgress = () => {
-    console.log('App: Navigating to progress');
-    setCurrentScreen('progress');
-  };
-
-  const goToHistory = () => {
-    console.log('App: Navigating to history');
-    setCurrentScreen('history');
-  };
-
-  const goToTechniques = () => {
-    console.log('App: Navigating to techniques');
-    setCurrentScreen('techniques');
-  };
-
-  const goToSettings = () => {
-    console.log('App: Navigating to settings');
-    setCurrentScreen('settings');
-  };
-
-  const goToParentDashboard = () => {
-    console.log('App: Navigating to parent dashboard');
-    setCurrentScreen('parentDashboard');
-  };
-
-  const goToGuardianSettings = () => {
-    console.log('App: Navigating to guardian settings');
-    setCurrentScreen('guardianSettings');
-  };
-
-  const goToBadges = () => {
-    console.log('App: Navigating to badges');
-    setCurrentScreen('badges');
-  };
-
-  const handleGetStarted = () => {
-    setCurrentScreen('accountType');
-  };
+  const handleGetStarted = () => setCurrentScreen('accountType');
 
   const handleAccountTypeSelect = (type: 'student' | 'parent') => {
     setUserType(type);
     localStorage.setItem('thinkfirst_userType', type);
-    
-    // Branch flow: Students go to grade selection, Parents skip to goal selection
     if (type === 'student') {
       setCurrentScreen('gradeSelection');
     } else {
-      // Parents skip grade selection and go straight to goal selection
       setCurrentScreen('goalSelection');
     }
   };
@@ -444,13 +408,8 @@ export default function App() {
     setCurrentScreen('methodology');
   };
 
-  const handleMethodologyComplete = () => {
-    setCurrentScreen('tryIt');
-  };
-
-  const handleTryItComplete = () => {
-    setCurrentScreen('notification');
-  };
+  const handleMethodologyComplete = () => setCurrentScreen('tryIt');
+  const handleTryItComplete = () => setCurrentScreen('notification');
 
   const handleNotificationEnable = () => {
     localStorage.setItem('thinkfirst_notificationEnabled', 'true');
@@ -463,111 +422,70 @@ export default function App() {
   };
 
   const handleStartTrial = (plan: 'solo' | 'family') => {
-    console.log(`Starting trial for ${plan} plan`);
     localStorage.setItem('thinkfirst_premium', 'true');
     localStorage.setItem('thinkfirst_plan', plan);
     setCurrentScreen('home');
   };
 
-  const handleStayFree = () => {
-    console.log('User chose to stay on free plan');
-    setCurrentScreen('home');
-  };
+  const handleStayFree = () => setCurrentScreen('home');
 
   const handleCreateFamilyAccount = () => {
-    console.log('Creating family account');
     localStorage.setItem('thinkfirst_premium', 'true');
     localStorage.setItem('thinkfirst_plan', 'family');
     setCurrentScreen('home');
   };
 
-  const handleLogin = () => {
-    setCurrentScreen('login');
-  };
+  const handleLogin = () => setCurrentScreen('login');
 
-  const handleLoginSubmit = (email: string, password: string) => {
-    console.log('Login submitted:', email);
-    // TODO: Implement actual Supabase auth
-    // For now, just go to home
+  const handleLoginSubmit = (_email: string, _password: string) => {
     setCurrentScreen('home');
   };
 
-  const handleSocialLogin = (provider: 'apple' | 'google') => {
-    console.log('Social login with:', provider);
-    // TODO: Implement Supabase OAuth
-    // For now, just go to home
+  const handleSocialLogin = (_provider: 'apple' | 'google') => {
     setCurrentScreen('home');
   };
 
   const handleRestorePurchases = () => {
     console.log('Restore purchases requested');
-    // TODO: Implement purchase restoration logic
   };
 
   const handleToggleNotifications = (enabled: boolean) => {
-    console.log('Notifications toggled:', enabled);
     localStorage.setItem('thinkfirst_notificationEnabled', enabled.toString());
   };
 
-  const handleEditEmail = () => {
-    console.log('Edit email requested');
-    // TODO: Implement email editing
-  };
-
-  const handleEditPassword = () => {
-    console.log('Edit password requested');
-    // TODO: Implement password editing
-  };
+  const handleEditEmail = () => console.log('Edit email requested');
+  const handleEditPassword = () => console.log('Edit password requested');
 
   const handleLogOut = () => {
-    console.log('Log out requested');
     setUserType(null);
     localStorage.removeItem('thinkfirst_userType');
     setCurrentScreen('splash');
   };
 
-  const handleDeleteAccount = () => {
-    console.log('Delete account requested');
-    // TODO: Show confirmation modal, then delete account
-  };
+  const handleDeleteAccount = () => console.log('Delete account requested');
+  const handleAddStudent = () => setCurrentScreen('addStudent');
 
-  const handleAddStudent = () => {
-    console.log('Add student requested');
-    setCurrentScreen('addStudent');
-  };
-
-  const handleNudgeMember = (memberId: string, memberName: string) => {
-    // Get the current user's name (in a real app, this would come from auth)
-    // For demo purposes, we're assuming the logged-in user is the main student ("You")
-    const currentUserName = "You"; // In production, get from user context
-    
-    // Create a new nudge notification
+  const handleNudgeMember = (_memberId: string, _memberName: string) => {
+    const currentUserName = "You";
     const newNotification: NudgeNotification = {
       id: crypto.randomUUID(),
       fromName: currentUserName,
       timestamp: Date.now(),
     };
-
-    // Add to notifications
     const updatedNotifications = [...nudgeNotifications, newNotification];
     setNudgeNotifications(updatedNotifications);
-    
-    // Save to localStorage
     localStorage.setItem('thinkfirst_nudgeNotifications', JSON.stringify(updatedNotifications));
   };
 
   const handleDismissNotification = (id: string) => {
-    // Remove notification
     const updatedNotifications = nudgeNotifications.filter(n => n.id !== id);
     setNudgeNotifications(updatedNotifications);
-    
-    // Save to localStorage
     localStorage.setItem('thinkfirst_nudgeNotifications', JSON.stringify(updatedNotifications));
   };
 
+
   return (
     <div className="min-h-screen bg-[#121212] max-w-[480px] mx-auto relative">
-      {/* Nudge Notification Banner */}
       <NudgeNotificationBanner 
         notifications={nudgeNotifications}
         onDismiss={handleDismissNotification}
@@ -578,15 +496,11 @@ export default function App() {
       )}
 
       {currentScreen === 'accountType' && (
-        <AccountTypeScreen
-          onSelect={handleAccountTypeSelect}
-        />
+        <AccountTypeScreen onSelect={handleAccountTypeSelect} />
       )}
 
       {currentScreen === 'userType' && (
-        <UserTypeScreen
-          onSelect={handleUserTypeSelect}
-        />
+        <UserTypeScreen onSelect={handleUserTypeSelect} />
       )}
 
       {currentScreen === 'gradeSelection' && (
@@ -604,9 +518,7 @@ export default function App() {
       )}
 
       {currentScreen === 'methodology' && (
-        <MethodologyScreen
-          onComplete={handleMethodologyComplete}
-        />
+        <MethodologyScreen onComplete={handleMethodologyComplete} />
       )}
 
       {currentScreen === 'tryIt' && (
@@ -644,7 +556,6 @@ export default function App() {
           coachHint={isRevisionMode && evaluation ? evaluation.coach_hint : undefined}
           onShowUpgradePrompt={(feature) => setUpgradePromptFeature(feature)}
           onRevealAnswer={() => {
-            // Handle mercy mode - reveal answer with zero points
             setCurrentScreen('answer');
             setEvaluation({
               effort_score: 0,
@@ -816,9 +727,7 @@ export default function App() {
       )}
 
       {currentScreen === 'animations' && (
-        <AnimationShowcase
-          onBack={goToProfile}
-        />
+        <AnimationShowcase onBack={goToProfile} />
       )}
 
       {currentScreen === 'login' && (
@@ -858,31 +767,21 @@ export default function App() {
       )}
 
       {currentScreen === 'frictionDemo' && (
-        <DifficultyFrictionDemo
-          onBack={goToGuardianSettings}
-        />
+        <DifficultyFrictionDemo onBack={goToGuardianSettings} />
       )}
 
       {currentScreen === 'weeklyReport' && (
-        <WeeklyReportPreview
-          onBack={goToGuardianSettings}
-        />
+        <WeeklyReportPreview onBack={goToGuardianSettings} />
       )}
 
       {currentScreen === 'leaderboard' && (
-        <FamilyLeaderboard
-          onBack={goToParentDashboard}
-        />
+        <FamilyLeaderboard onBack={goToParentDashboard} />
       )}
 
       {currentScreen === 'badges' && (
-        <BadgesScreen
-          userId={userId}
-          onBack={goToProfile}
-        />
+        <BadgesScreen userId={userId} onBack={goToProfile} />
       )}
 
-      {/* Upgrade Prompts */}
       {upgradePromptFeature && (
         <UpgradePrompt
           feature={upgradePromptFeature}
@@ -895,7 +794,6 @@ export default function App() {
         />
       )}
 
-      {/* Badge Unlock Modal */}
       {showBadgeModal && (
         <BadgeUnlockModal
           isOpen={showBadgeModal}
