@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, TrendingUp, Flame, BookOpen, AlertCircle, ChevronDown, Check, Users } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Flame, BookOpen, AlertCircle, ChevronDown, Check, Users, Copy } from 'lucide-react';
 import { StreakData } from '../App';
+import { getInviteCode, generateInviteCode, getAvailableFamilySlots } from '../utils/inviteCode';
 
 interface Child {
   id: string;
@@ -42,6 +43,8 @@ export function ParentDashboard({ onBack, userId, streak, onAddStudent, onViewLe
     { subject: 'Chemistry', score: 78, color: '#10B981' },
     { subject: 'Biology', score: 92, color: '#10B981' },
   ]);
+  const [inviteCode, setInviteCode] = useState(getInviteCode());
+  const [codeCopied, setCodeCopied] = useState(false);
 
   // Load child's activity data
   useEffect(() => {
@@ -50,6 +53,25 @@ export function ParentDashboard({ onBack, userId, streak, onAddStudent, onViewLe
   }, [selectedChild]);
 
   const isPremium = localStorage.getItem('thinkfirst_premium') === 'true';
+  const plan = localStorage.getItem('thinkfirst_plan') as 'solo' | 'family' | null;
+  const isGuardianPlan = isPremium && plan === 'family';
+
+  // Generate invite code if family plan and none exists
+  useEffect(() => {
+    if (isGuardianPlan && !inviteCode) {
+      const subscriptionId = localStorage.getItem('thinkfirst_subscriptionId') || 'sub-default';
+      const newCode = generateInviteCode(userId, subscriptionId);
+      setInviteCode(newCode);
+    }
+  }, [isGuardianPlan, inviteCode, userId]);
+
+  const handleCopyInviteCode = () => {
+    if (inviteCode) {
+      navigator.clipboard.writeText(inviteCode.code);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    }
+  };
 
   // If not premium, show the locked screen
   if (!isPremium) {
@@ -215,6 +237,47 @@ export function ParentDashboard({ onBack, userId, streak, onAddStudent, onViewLe
             </div>
           </div>
         </div>
+
+        {/* Invite Code Card - Only show for Guardian Plan */}
+        {isGuardianPlan && inviteCode && (
+          <div className="px-6 mb-6">
+            <div className="bg-gradient-to-br from-violet-600/20 to-purple-600/20 backdrop-blur-sm rounded-2xl p-5 border border-violet-500/30">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Users size={18} className="text-violet-400" />
+                  <span className="text-white text-sm" style={{ fontWeight: 600 }}>
+                    Family Invite Code
+                  </span>
+                </div>
+                <span className="text-xs text-gray-400">
+                  {getAvailableFamilySlots()} seats left
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex-1 px-4 py-3 rounded-xl bg-black/30 border border-violet-500/30 text-center">
+                  <span className="text-violet-300 text-xl font-mono" style={{ fontWeight: 700, letterSpacing: '0.1em' }}>
+                    {inviteCode.code}
+                  </span>
+                </div>
+                <button
+                  onClick={handleCopyInviteCode}
+                  className="w-12 h-12 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center hover:bg-violet-600/30 transition-colors"
+                >
+                  {codeCopied ? (
+                    <Check size={20} className="text-green-400" />
+                  ) : (
+                    <Copy size={20} className="text-violet-400" />
+                  )}
+                </button>
+              </div>
+              
+              <p className="text-gray-400 text-xs mt-3 text-center">
+                Share this code with your children to link their accounts
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* View Leaderboard Button */}
         {onViewLeaderboard && (

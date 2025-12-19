@@ -1,6 +1,14 @@
-import { useState } from 'react';
-import { ArrowLeft, Shield, Users, Play, Mail } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Shield, Users, Play, Mail, Lock, Zap, HelpCircle } from 'lucide-react';
 import { motion } from 'motion/react';
+import { GuardianPinModal } from './GuardianPinModal';
+import { 
+  hasGuardianPin, 
+  getGuardianSettings, 
+  updateGuardianSettings,
+  verifyPin 
+} from '../utils/guardianPin';
+import { getInviteCode, generateInviteCode, getAvailableFamilySlots } from '../utils/inviteCode';
 
 interface GuardianSettingsProps {
   onBack: () => void;
@@ -13,6 +21,12 @@ export function GuardianSettings({ onBack, onUpgrade, onShowDemo, onShowWeeklyRe
   const isPremium = localStorage.getItem('thinkfirst_premium') === 'true';
   const plan = localStorage.getItem('thinkfirst_plan') as 'solo' | 'family' | null;
   const isGuardianPlan = isPremium && plan === 'family';
+  const userId = localStorage.getItem('thinkfirst_userId') || 'parent-default';
+
+  // PIN Modal state
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinVerified, setPinVerified] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   // Card 1: Influence (The Soft Locks)
   const [enableFrictionInterstitials, setEnableFrictionInterstitials] = useState(
@@ -21,6 +35,11 @@ export function GuardianSettings({ onBack, onUpgrade, onShowDemo, onShowWeeklyRe
   const [requireReason, setRequireReason] = useState(
     localStorage.getItem('thinkfirst_requireReason') !== 'false'
   );
+  
+  // Card 1.5: Hard Locks (Guardian Controls)
+  const guardianSettings = getGuardianSettings();
+  const [forceMasteryMode, setForceMasteryMode] = useState(guardianSettings?.forceMasteryMode ?? false);
+  const [blockMercyButton, setBlockMercyButton] = useState(guardianSettings?.blockMercyButton ?? false);
 
   // Card 2: Transparency
   const [reportEmail, setReportEmail] = useState(
@@ -29,6 +48,34 @@ export function GuardianSettings({ onBack, onUpgrade, onShowDemo, onShowWeeklyRe
   const [includeModeSwitch, setIncludeModeSwitch] = useState(
     localStorage.getItem('thinkfirst_includeModeSwitch') !== 'false'
   );
+  
+  // Invite code
+  const [inviteCode, setInviteCode] = useState(getInviteCode());
+  
+  // Generate invite code if family plan and none exists
+  useEffect(() => {
+    if (isGuardianPlan && !inviteCode) {
+      const subscriptionId = localStorage.getItem('thinkfirst_subscriptionId') || 'sub-default';
+      const newCode = generateInviteCode(userId, subscriptionId);
+      setInviteCode(newCode);
+    }
+  }, [isGuardianPlan, inviteCode, userId]);
+  
+  // Require PIN for sensitive actions
+  const requirePinForAction = (action: () => void) => {
+    if (!hasGuardianPin()) {
+      // No PIN set, show modal to create one
+      setPendingAction(() => action);
+      setShowPinModal(true);
+    } else if (!pinVerified) {
+      // PIN exists but not verified this session
+      setPendingAction(() => action);
+      setShowPinModal(true);
+    } else {
+      // PIN verified, execute action
+      action();
+    }
+  };
 
   const handleToggleFriction = (enabled: boolean) => {
     setEnableFrictionInterstitials(enabled);
@@ -48,6 +95,28 @@ export function GuardianSettings({ onBack, onUpgrade, onShowDemo, onShowWeeklyRe
   const handleEmailChange = (email: string) => {
     setReportEmail(email);
     localStorage.setItem('thinkfirst_guardianEmail', email);
+  };
+  
+  const handleToggleForceMastery = (enabled: boolean) => {
+    requirePinForAction(() => {
+      setForceMasteryMode(enabled);
+      updateGuardianSettings({ forceMasteryMode: enabled });
+    });
+  };
+  
+  const handleToggleBlockMercy = (enabled: boolean) => {
+    requirePinForAction(() => {
+      setBlockMercyButton(enabled);
+      updateGuardianSettings({ blockMercyButton: enabled });
+    });
+  };
+  
+  const handlePinSuccess = () => {
+    setPinVerified(true);
+    if (pendingAction) {
+      pendingAction();
+      setPendingAction(null);
+    }
   };
 
   return (
@@ -172,6 +241,106 @@ export function GuardianSettings({ onBack, onUpgrade, onShowDemo, onShowWeeklyRe
           </div>
         </motion.div>
 
+        {/* Card 1.5: Hard Locks (Guardian Controls) */}
+        <motion.div
+          className="bg-[rgba(20,20,20,0.95)] backdrop-blur-xl rounded-[20px] p-5 border border-white/10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Lock className="w-4 h-4 text-orange-400" />
+              <h3 className="text-white text-base" style={{ fontWeight: 600 }}>
+                Hard Locks
+              </h3>
+            </div>
+            <p className="text-gray-500 text-xs">
+              PIN-protected controls (use sparingly)
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Toggle: Force Mastery Mode */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Zap className="w-4 h-4 text-orange-400" />
+                  <p className="text-gray-200 text-sm" style={{ fontWeight: 500 }}>
+                    Force Mastery Mode
+                  </p>
+                </div>
+                <p className="text-gray-500 text-xs">
+                  Lock student to Mastery Mode (2x difficulty)
+                </p>
+              </div>
+              <button
+                onClick={() => handleToggleForceMastery(!forceMasteryMode)}
+                className="flex-shrink-0"
+              >
+                <div
+                  className="relative w-12 h-6 rounded-full transition-all"
+                  style={{
+                    background: forceMasteryMode
+                      ? 'linear-gradient(135deg, #F97316, #FB923C)'
+                      : 'rgba(255, 255, 255, 0.2)',
+                    boxShadow: forceMasteryMode
+                      ? '0 0 20px rgba(249, 115, 22, 0.4)'
+                      : 'none',
+                  }}
+                >
+                  <motion.div
+                    className="absolute top-0.5 w-5 h-5 rounded-full bg-white"
+                    animate={{
+                      x: forceMasteryMode ? 26 : 2,
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                </div>
+              </button>
+            </div>
+
+            {/* Toggle: Block Mercy Button */}
+            <div className="flex items-start justify-between gap-4 pt-4 border-t border-white/5">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <HelpCircle className="w-4 h-4 text-red-400" />
+                  <p className="text-gray-200 text-sm" style={{ fontWeight: 500 }}>
+                    Block "I'm Stuck" Button
+                  </p>
+                </div>
+                <p className="text-gray-500 text-xs">
+                  Hide the mercy option from students
+                </p>
+              </div>
+              <button
+                onClick={() => handleToggleBlockMercy(!blockMercyButton)}
+                className="flex-shrink-0"
+              >
+                <div
+                  className="relative w-12 h-6 rounded-full transition-all"
+                  style={{
+                    background: blockMercyButton
+                      ? 'linear-gradient(135deg, #EF4444, #F87171)'
+                      : 'rgba(255, 255, 255, 0.2)',
+                    boxShadow: blockMercyButton
+                      ? '0 0 20px rgba(239, 68, 68, 0.4)'
+                      : 'none',
+                  }}
+                >
+                  <motion.div
+                    className="absolute top-0.5 w-5 h-5 rounded-full bg-white"
+                    animate={{
+                      x: blockMercyButton ? 26 : 2,
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                </div>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Card 2: Transparency */}
         <motion.div
           className="bg-[rgba(20,20,20,0.95)] backdrop-blur-xl rounded-[20px] p-5 border border-white/10"
@@ -284,6 +453,32 @@ export function GuardianSettings({ onBack, onUpgrade, onShowDemo, onShowWeeklyRe
                 </div>
               </div>
 
+              {/* Invite Code Display */}
+              {inviteCode && (
+                <div className="pt-3 border-t border-white/5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 text-sm">Invite Code</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(inviteCode.code);
+                        // Could add toast here
+                      }}
+                      className="text-xs text-violet-400 hover:text-violet-300"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <div className="px-4 py-3 rounded-xl bg-violet-500/10 border border-violet-500/30 text-center">
+                    <span className="text-violet-300 text-xl font-mono" style={{ fontWeight: 700, letterSpacing: '0.1em' }}>
+                      {inviteCode.code}
+                    </span>
+                  </div>
+                  <p className="text-gray-500 text-xs mt-2 text-center">
+                    Share this code with your children to link their accounts
+                  </p>
+                </div>
+              )}
+
               {/* Seats Available Badge */}
               <div className="flex items-center justify-between pt-3 border-t border-white/5">
                 <span className="text-gray-400 text-sm">Available Seats</span>
@@ -291,7 +486,7 @@ export function GuardianSettings({ onBack, onUpgrade, onShowDemo, onShowWeeklyRe
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-gray-300" />
                     <span className="text-gray-100 text-sm" style={{ fontWeight: 500 }}>
-                      5 Seats
+                      {getAvailableFamilySlots()} of 5 Seats
                     </span>
                   </div>
                 </div>

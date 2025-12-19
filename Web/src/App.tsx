@@ -35,6 +35,14 @@ import { BadgesScreen } from './components/BadgesScreen';
 import { BadgeUnlockModal } from './components/BadgeUnlockModal';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { getSubscriptionStatus, incrementQuestionCount, getQuestionsRemaining } from './utils/subscription';
+import { 
+  getStreakFreezeState, 
+  consumeFreeze, 
+  grantMonthlyFreezes, 
+  wasDayMissed,
+  saveStreakFreezeState,
+  type StreakFreezeState 
+} from './utils/streakFreeze';
 
 export type Screen = 'splash' | 'accountType' | 'userType' | 'gradeSelection' | 'goalSelection' | 'methodology' | 'tryIt' | 'notification' | 'home' | 'pricing' | 'parentPlanDetails' | 'parentDashboard' | 'guardianSettings' | 'attempt' | 'evaluation' | 'answer' | 'progress' | 'history' | 'profile' | 'techniques' | 'animations' | 'login' | 'settings' | 'connectParent' | 'addStudent' | 'frictionDemo' | 'weeklyReport' | 'leaderboard' | 'badges';
 
@@ -53,6 +61,7 @@ export interface Evaluation {
 export interface StreakData {
   count: number;
   lastDate: string | null;
+  freezeUsedToday?: boolean;
 }
 
 export interface NudgeNotification {
@@ -86,6 +95,7 @@ export default function App() {
   const [upgradePromptFeature, setUpgradePromptFeature] = useState<'voice' | 'mastery' | 'coach' | 'badges' | 'stats' | 'questions' | null>(null);
   const [nudgeNotifications, setNudgeNotifications] = useState<NudgeNotification[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [streakFreezeState, setStreakFreezeState] = useState<StreakFreezeState | null>(null);
 
   // Hydrate state from localStorage on client
   useEffect(() => {
@@ -119,6 +129,25 @@ export default function App() {
       setNudgeNotifications(JSON.parse(storedNotifications));
     }
 
+    // Load streak freeze state
+    const freezeState = getStreakFreezeState();
+    setStreakFreezeState(freezeState);
+    
+    // Check if we need to grant monthly freezes (first of month)
+    const today = new Date();
+    const lastGrantDate = getLocalStorage('thinkfirst_lastFreezeGrant');
+    const lastGrantMonth = lastGrantDate ? new Date(lastGrantDate).getMonth() : -1;
+    
+    if (lastGrantMonth !== today.getMonth()) {
+      const isPremium = getLocalStorage('thinkfirst_premium') === 'true';
+      const plan = getLocalStorage('thinkfirst_plan') as 'solo' | 'family' | null;
+      const planType = isPremium ? (plan || 'solo') : 'free';
+      const updatedState = grantMonthlyFreezes(freezeState, planType);
+      setStreakFreezeState(updatedState);
+      saveStreakFreezeState(updatedState);
+      setLocalStorage('thinkfirst_lastFreezeGrant', today.toISOString());
+    }
+
     setIsHydrated(true);
   }, []);
   const [newlyUnlockedBadges, setNewlyUnlockedBadges] = useState<string[]>([]);
@@ -142,7 +171,41 @@ export default function App() {
       );
       if (response.ok) {
         const data = await response.json();
-        setStreak(data);
+        
+        // Check if streak should be reset (missed a day)
+        if (data.lastDate) {
+          const lastDate = new Date(data.lastDate);
+          const now = new Date();
+          
+          if (wasDayMissed(lastDate, now)) {
+            // Check if we can use a freeze
+            const currentFreezeState = getStreakFreezeState();
+            if (currentFreezeState && currentFreezeState.personalFreezes > 0) {
+              // Use a freeze to save the streak
+              const result = consumeFreeze(currentFreezeState);
+              if (result.success) {
+                setStreakFreezeState(result.newState);
+                saveStreakFreezeState(result.newState);
+                
+                // Mark that freeze was used today
+                setStreak({ ...data, freezeUsedToday: true });
+                console.log('Streak saved with freeze! Remaining:', result.newState.personalFreezes);
+              } else {
+                // No freeze available, streak resets
+                setStreak({ count: 0, lastDate: null });
+                console.log('Streak reset - no freeze available');
+              }
+            } else {
+              // No freeze available, streak resets
+              setStreak({ count: 0, lastDate: null });
+              console.log('Streak reset - no freeze available');
+            }
+          } else {
+            setStreak(data);
+          }
+        } else {
+          setStreak(data);
+        }
       }
     } catch (error) {
       console.error('Error loading streak:', error);

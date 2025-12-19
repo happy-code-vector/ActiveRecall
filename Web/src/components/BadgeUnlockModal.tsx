@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { getBadgeById } from '../utils/badgeDefinitions';
+import { ANIMATION_DURATION, EASING } from '../utils/animationTiming';
+import { triggerUnlockHaptic } from '../utils/haptics';
 
 interface BadgeUnlockModalProps {
   isOpen: boolean;
@@ -19,6 +21,11 @@ export function BadgeUnlockModal({ isOpen, badges, currentBadgeIndex = 0, onClos
   const badge = getBadgeById(currentBadgeId);
   
   const hasMore = currentBadgeIndex < badgeIds.length - 1;
+
+  // Trigger haptic feedback when modal opens
+  if (isOpen && badge) {
+    triggerUnlockHaptic();
+  }
 
   if (!badge) return null;
 
@@ -118,21 +125,24 @@ export function BadgeUnlockModal({ isOpen, badges, currentBadgeIndex = 0, onClos
                     }}
                   />
 
-                  {/* Badge Container - Scales up with bounce */}
+                  {/* Badge Container - 3D scaling animation (0% → 110% → 100%) */}
                   <motion.div
                     className="w-32 h-32 rounded-3xl relative overflow-hidden"
                     style={{
                       background: `linear-gradient(135deg, ${badge.color}, ${badge.colorEnd})`,
                       boxShadow: `0 0 60px ${badge.color}80`,
+                      transformStyle: 'preserve-3d',
+                      perspective: '1000px',
                     }}
-                    initial={{ scale: 0 }}
+                    initial={{ scale: 0, rotateY: -180 }}
                     animate={{ 
                       scale: [0, 1.1, 1],
+                      rotateY: [180, 0, 0],
                     }}
                     transition={{
-                      type: 'spring',
-                      stiffness: 300,
-                      damping: 20,
+                      duration: ANIMATION_DURATION.SLOW / 1000,
+                      times: [0, 0.7, 1],
+                      ease: 'easeOut',
                       delay: 0.05,
                     }}
                   >

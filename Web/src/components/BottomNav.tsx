@@ -1,5 +1,7 @@
 import { BarChart3, Clock, Brain, Home } from 'lucide-react';
+import { motion } from 'motion/react';
 import { StreakData } from '../App';
+import { ANIMATION_DURATION } from '../utils/animationTiming';
 
 interface BottomNavProps {
   currentTab: 'home' | 'progress' | 'history' | 'learn' | 'profile';
@@ -56,13 +58,40 @@ export function BottomNav({
             <span className={`text-sm ${currentTab === 'progress' ? 'text-white' : 'text-gray-300'}`}>
               Progress
             </span>
-            {/* Streak count badge */}
+            {/* Streak count badge with scale animation */}
             {streak && streak.count > 0 && (
-              <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-[10px] text-white" style={{ fontWeight: 700 }}>
+              <motion.div 
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-orange-500 rounded-full flex items-center justify-center"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 500,
+                  damping: 25,
+                }}
+                whileHover={{
+                  scale: [1, 1.1, 1],
+                  transition: {
+                    duration: ANIMATION_DURATION.SLOW / 1000,
+                    ease: 'easeInOut',
+                  },
+                }}
+              >
+                <motion.span 
+                  className="text-[10px] text-white" 
+                  style={{ fontWeight: 700 }}
+                  key={streak.count}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 25,
+                  }}
+                >
                   {streak.count}
-                </span>
-              </div>
+                </motion.span>
+              </motion.div>
             )}
           </button>
         )}

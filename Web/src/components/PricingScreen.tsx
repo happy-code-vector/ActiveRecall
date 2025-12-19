@@ -547,6 +547,58 @@ export function PricingScreen({ onStartTrial, onBack, onStayFree, onCreateFamily
         >
           Cancel anytime in App Store settings. No commitment.
         </motion.p>
+
+        {/* Compliance Links */}
+        <motion.div
+          className="flex items-center justify-center gap-4 mt-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7, duration: 0.6 }}
+        >
+          <button
+            onClick={() => {
+              // In production, this would call the App Store restore purchases API
+              console.log('Restore purchases');
+              alert('Checking for previous purchases...');
+            }}
+            className="text-gray-500 hover:text-gray-400 text-xs underline transition-colors"
+          >
+            Restore Purchases
+          </button>
+          <span className="text-gray-700">•</span>
+          <a
+            href="https://thinkfirst.app/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-500 hover:text-gray-400 text-xs underline transition-colors"
+          >
+            Terms of Service
+          </a>
+          <span className="text-gray-700">•</span>
+          <a
+            href="https://thinkfirst.app/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-500 hover:text-gray-400 text-xs underline transition-colors"
+          >
+            Privacy Policy
+          </a>
+        </motion.div>
+
+        {/* Auto-renewal Disclosure for Family Plan */}
+        {selectedPlan === 'parent' && (
+          <motion.p
+            className="text-gray-600 text-center text-[10px] mt-3 px-4 leading-relaxed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.75, duration: 0.6 }}
+          >
+            Payment will be charged to your Apple ID account at confirmation of purchase. 
+            Subscription automatically renews unless canceled at least 24 hours before the end of the current period. 
+            Your account will be charged for renewal within 24 hours prior to the end of the current period. 
+            Manage or cancel your subscription in your App Store account settings.
+          </motion.p>
+        )}
       </div>
 
       {/* Parent Share Modal */}

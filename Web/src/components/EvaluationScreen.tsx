@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Unlock, Share2 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { Evaluation } from '../App';
 import { ShareCard } from './ShareCard';
+import { EvaluationLoadingState } from './EvaluationLoadingState';
+import { triggerUnlockHaptic } from '../utils/haptics';
+import { ANIMATION_DURATION } from '../utils/animationTiming';
 
 interface EvaluationScreenProps {
   question: string;
   attempt: string;
-  evaluation: Evaluation;
+  evaluation: Evaluation | null;
+  isLoading?: boolean;
   isRevisionMode: boolean;
   onUnlock: () => void;
   onRetry: () => void;
@@ -17,6 +22,7 @@ export function EvaluationScreen({
   question,
   attempt,
   evaluation,
+  isLoading = false,
   isRevisionMode,
   onUnlock,
   onRetry,
@@ -27,15 +33,17 @@ export function EvaluationScreen({
   const [understandingProgress, setUnderstandingProgress] = useState(0);
   const [showShareCard, setShowShareCard] = useState(false);
 
-  // Calculate percentages (out of 3)
-  const effortPercent = Math.round((evaluation.effort_score / 3) * 100);
-  const understandingPercent = Math.round((evaluation.understanding_score / 3) * 100);
+  // Calculate percentages (out of 3) - only if evaluation exists
+  const effortPercent = evaluation ? Math.round((evaluation.effort_score / 3) * 100) : 0;
+  const understandingPercent = evaluation ? Math.round((evaluation.understanding_score / 3) * 100) : 0;
 
   // Check if this is a "high effort" score worth sharing (83%+ = 2.5/3 or higher)
-  const isHighEffort = evaluation.effort_score >= 2.5;
+  const isHighEffort = evaluation ? evaluation.effort_score >= 2.5 : false;
 
   // Animate lock opening and progress rings
   useEffect(() => {
+    if (!evaluation) return;
+    
     if (evaluation.unlock) {
       setTimeout(() => setShowUnlock(true), 300);
     }
@@ -52,7 +60,31 @@ export function EvaluationScreen({
         setShowShareCard(true);
       }, 2000); // Show after 2 seconds to let user see their scores first
     }
-  }, [evaluation.unlock, effortPercent, understandingPercent, isHighEffort, evaluation.copied]);
+  }, [evaluation, effortPercent, understandingPercent, isHighEffort]);
+
+  // Show loading state
+  if (isLoading || !evaluation) {
+    return (
+      <div className="min-h-screen flex flex-col bg-black relative overflow-hidden">
+        {/* Ambient purple glow */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[150px] pointer-events-none" />
+        
+        <div className="relative flex-1 flex items-center justify-center px-6">
+          <EvaluationLoadingState />
+        </div>
+        
+        {/* Back button during loading */}
+        <div className="fixed bottom-0 left-0 right-0 max-w-[480px] mx-auto p-6 bg-gradient-to-t from-black via-black to-transparent">
+          <button
+            onClick={onHome}
+            className="w-full py-3 text-gray-400 hover:text-white transition-colors text-[15px]"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // SVG circle calculations for progress rings
   const radius = 45;

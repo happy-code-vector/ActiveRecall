@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { StreakData } from '../App';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { BottomNav } from './BottomNav';
+import { ProgressTimeline, generateTimelineData, DayNode } from './ProgressTimeline';
 
 interface Child {
   id: string;
@@ -49,6 +50,7 @@ export function ProgressScreen({ userId, streak, onBack, onGoToHome, onGoToProgr
     unlockRate: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [timelineData, setTimelineData] = useState<DayNode[]>([]);
 
   // Load progress data when userId or selectedChild changes
   useEffect(() => {
@@ -73,6 +75,21 @@ export function ProgressScreen({ userId, streak, onBack, onGoToHome, onGoToProgr
         const data = await response.json();
         setStats(data);
       }
+      
+      // Generate timeline data based on streak
+      // In production, this would use actual activity dates from the API
+      const mockActivityDates: Date[] = [];
+      const today = new Date();
+      
+      // Generate mock activity for the past streak.count days
+      for (let i = 0; i < streak.count; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        mockActivityDates.push(date);
+      }
+      
+      const timeline = generateTimelineData(streak.count, mockActivityDates, 14);
+      setTimelineData(timeline);
     } catch (error) {
       console.error('Error loading progress:', error);
     } finally {
@@ -175,17 +192,44 @@ export function ProgressScreen({ userId, streak, onBack, onGoToHome, onGoToProgr
         </div>
       ) : (
         <div className="relative flex-1 px-5 pt-6 pb-24 overflow-y-auto space-y-4">{/* Added pb-24 for bottom nav space */}
-          {/* Streak Card */}
-          <div className="relative">
+          {/* Streak Card with animation */}
+          <motion.div 
+            className="relative"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-yellow-500/20 rounded-3xl blur-xl" />
             <div className="relative bg-gradient-to-br from-orange-600/30 to-yellow-600/30 backdrop-blur-xl rounded-3xl p-6 border border-orange-500/20">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                <motion.div 
+                  className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center shadow-lg shadow-orange-500/30"
+                  animate={{
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                >
                   <Flame className="w-8 h-8 text-white" />
-                </div>
+                </motion.div>
                 <div className="flex-1">
                   <p className="text-orange-200/80 text-sm mb-1">Current Streak</p>
-                  <p className="text-3xl text-white">{streak.count} {streak.count === 1 ? 'day' : 'days'}</p>
+                  <motion.p 
+                    className="text-3xl text-white"
+                    key={streak.count}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 500,
+                      damping: 25,
+                    }}
+                  >
+                    {streak.count} {streak.count === 1 ? 'day' : 'days'}
+                  </motion.p>
                   {streak.count > 0 && (
                     <p className="text-orange-200/60 text-sm mt-1">
                       Keep it going!
@@ -194,7 +238,7 @@ export function ProgressScreen({ userId, streak, onBack, onGoToHome, onGoToProgr
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
@@ -216,6 +260,16 @@ export function ProgressScreen({ userId, streak, onBack, onGoToHome, onGoToProgr
               <p className="text-xs text-gray-500">success rate</p>
             </div>
           </div>
+
+          {/* Progress Timeline */}
+          {timelineData.length > 0 && (
+            <div className="bg-[#1E1E1E]/50 backdrop-blur-xl rounded-3xl p-5 border border-white/10">
+              <p className="text-sm text-gray-400 mb-2">
+                {isParent ? `${selectedChild.name}'s Activity Timeline` : 'Your Activity Timeline'}
+              </p>
+              <ProgressTimeline days={timelineData} maxDaysToShow={7} />
+            </div>
+          )}
 
           {/* Average Scores */}
           <div className="bg-[#1E1E1E]/50 backdrop-blur-xl rounded-3xl p-5 border border-white/10">

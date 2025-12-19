@@ -4,6 +4,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { VoiceInputWaveform } from './VoiceInputWaveform';
 import { MercyModal } from './MercyModal';
 import { getSubscriptionStatus } from '../utils/subscription';
+import { validateMinimumWords, MINIMUM_WORD_COUNT } from '../utils/validation';
+import { validateAttemptForNonsense } from '../utils/nonsenseDetection';
+import { triggerTypingHaptic, triggerMasteryToggleHaptic, triggerValidationErrorHaptic } from '../utils/haptics';
+import { isForceMasteryEnabled, isMercyButtonBlocked } from '../utils/guardianPin';
+import { ANIMATION_PRESETS } from '../utils/animationTiming';
+import { toast } from 'sonner';
 
 interface AttemptGateProps {
   question: string;
@@ -22,17 +28,23 @@ export function AttemptGate({ question, onSubmit, onBack, previousAttempt, coach
   const [attempt, setAttempt] = useState(previousAttempt || '');
   const [showHint, setShowHint] = useState(false);
   const [copiedDetected, setCopiedDetected] = useState(false);
-  const [masteryMode, setMasteryMode] = useState(false);
+  const [masteryMode, setMasteryMode] = useState(isForceMasteryEnabled());
   const [showCoachTip, setShowCoachTip] = useState(!!coachHint);
   const [showMercyModal, setShowMercyModal] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
   
   // Get subscription status
   const subscriptionStatus = getSubscriptionStatus();
+  
+  // Guardian mode settings
+  const forceMastery = isForceMasteryEnabled();
+  const mercyBlocked = isMercyButtonBlocked();
 
   const isRevisionMode = !!previousAttempt && !!coachHint;
 
   const wordCount = attempt.trim().split(/\s+/).filter(w => w.length > 0).length;
-  const canSubmit = attempt.trim().length > 0;
+  const wordValidation = validateMinimumWords(attempt);
+  const canSubmit = wordValidation.valid;
 
   // Simple copy/paste detection
   useEffect(() => {
@@ -60,9 +72,35 @@ export function AttemptGate({ question, onSubmit, onBack, previousAttempt, coach
   }, [attempt]);
 
   const handleSubmit = () => {
-    if (canSubmit) {
-      onSubmit(attempt, masteryMode);
+    // Check word count validation
+    if (!wordValidation.valid) {
+      setIsShaking(true);
+      triggerValidationErrorHaptic();
+      toast.error(wordValidation.message || 'Add a bit more detail so I can understand you.');
+      setTimeout(() => setIsShaking(false), 500);
+      return;
     }
+    
+    // Check for nonsense
+    const nonsenseCheck = validateAttemptForNonsense(attempt);
+    if (!nonsenseCheck.valid) {
+      setIsShaking(true);
+      triggerValidationErrorHaptic();
+      toast.error(nonsenseCheck.error || 'Type a real explanation to unlock the answer.');
+      setTimeout(() => setIsShaking(false), 500);
+      return;
+    }
+    
+    onSubmit(attempt, masteryMode);
+  };
+  
+  // Handle text input with haptic feedback
+  const handleAttemptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    if (newValue.length > attempt.length) {
+      triggerTypingHaptic();
+    }
+    setAttempt(newValue);
   };
 
   // Handle keyboard submission
@@ -132,11 +170,20 @@ export function AttemptGate({ question, onSubmit, onBack, previousAttempt, coach
             <div className="mb-6">
               <motion.button
                 onClick={() => {
+                  // If force mastery is enabled by guardian, don't allow toggle
+                  if (forceMastery) {
+                    toast.info('Mastery Mode is locked by your guardian.');
+                    return;
+                  }
                   if (!subscriptionStatus.canUseMasteryMode && !masteryMode) {
                     // Show upgrade prompt for mastery mode
                     onShowUpgradePrompt?.('mastery');
                   } else {
-                    setMasteryMode(!masteryMode);
+                    const newMode = !masteryMode;
+                    setMasteryMode(newMode);
+                    if (newMode) {
+                      triggerMasteryToggleHaptic();
+                    }
                   }
                 }}
                 className="relative group"
@@ -181,7 +228,7 @@ export function AttemptGate({ question, onSubmit, onBack, previousAttempt, coach
                   </motion.div>
 
                   {/* Label */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 relative">
                     <Zap 
                       className="w-4 h-4"
                       style={{ color: masteryMode ? '#FB923C' : '#6B7280' }}
@@ -192,6 +239,42 @@ export function AttemptGate({ question, onSubmit, onBack, previousAttempt, coach
                     >
                       Mastery Mode
                     </span>
+                    
+                    {/* Heat shimmer particles on toggle ON */}
+                    <AnimatePresence>
+                      {masteryMode && (
+                        <>
+                          {[...Array(6)].map((_, i) => (
+                            <motion.div
+                              key={i}
+                              className="absolute w-1.5 h-1.5 rounded-full"
+                              style={{
+                                background: 'linear-gradient(135deg, #F97316, #FB923C)',
+                                left: `${10 + i * 8}px`,
+                                top: '50%',
+                              }}
+                              initial={{ 
+                                opacity: 1, 
+                                y: 0, 
+                                scale: 1,
+                              }}
+                              animate={{ 
+                                opacity: 0, 
+                                y: -20 - Math.random() * 10, 
+                                x: (Math.random() - 0.5) * 20,
+                                scale: 0,
+                              }}
+                              exit={{ opacity: 0 }}
+                              transition={{
+                                duration: 0.5,
+                                delay: i * 0.05,
+                                ease: 'easeOut',
+                              }}
+                            />
+                          ))}
+                        </>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Badge or Lock indicator */}
@@ -250,7 +333,7 @@ export function AttemptGate({ question, onSubmit, onBack, previousAttempt, coach
         <div className="relative mb-8">
           <motion.textarea
             value={attempt}
-            onChange={(e) => setAttempt(e.target.value)}
+            onChange={handleAttemptChange}
             onKeyDown={handleKeyDown}
             placeholder={isRevisionMode ? "Add a bit more detail..." : "Type your explanation here…"}
             rows={12}
@@ -490,12 +573,16 @@ export function AttemptGate({ question, onSubmit, onBack, previousAttempt, coach
           }}
           whileHover={canSubmit ? { scale: 1.02 } : {}}
           whileTap={canSubmit ? { scale: 0.98 } : {}}
-          animate={canSubmit ? {
+          animate={isShaking ? {
+            x: ANIMATION_PRESETS.shake.keyframes.x,
+          } : canSubmit ? {
             boxShadow: masteryMode
               ? ['0 0 0 0 rgba(249, 115, 22, 0.4)', '0 0 20px 0 rgba(249, 115, 22, 0.2)']
               : ['0 0 0 0 rgba(139, 92, 246, 0.4)', '0 0 20px 0 rgba(139, 92, 246, 0.2)'],
           } : {}}
-          transition={{
+          transition={isShaking ? {
+            duration: ANIMATION_PRESETS.shake.duration / 1000,
+          } : {
             boxShadow: {
               duration: 2,
               repeat: Infinity,
@@ -513,8 +600,8 @@ export function AttemptGate({ question, onSubmit, onBack, previousAttempt, coach
           </p>
         )}
 
-        {/* Mercy Mode Button */}
-        {onRevealAnswer && (
+        {/* Mercy Mode Button - Hidden if blocked by guardian */}
+        {onRevealAnswer && !mercyBlocked && (
           <button
             onClick={() => setShowMercyModal(true)}
             className="absolute left-6 bottom-6 w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center transition-all hover:bg-red-600"

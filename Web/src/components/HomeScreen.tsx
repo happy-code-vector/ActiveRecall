@@ -4,6 +4,8 @@ import { StreakData } from '../App';
 import { motion } from 'motion/react';
 import { BottomNav } from './BottomNav';
 import { FamilySquadStreakCard } from './FamilySquadStreakCard';
+import { ClipboardPill } from './ClipboardPill';
+import { useClipboard } from '../hooks/useClipboard';
 import { getSubscriptionStatus } from '../utils/subscription';
 import { toast } from 'sonner';
 
@@ -95,6 +97,9 @@ const STARTER_CHALLENGES = [
 export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onGoToPricing, onGoToParentDashboard, onGoToProfile, onGoToTechniques, onLogin, onNudgeMember, streak }: HomeScreenProps) {
   const [questionInput, setQuestionInput] = useState('');
   const [isNewUser, setIsNewUser] = useState(false);
+  
+  // Clipboard detection
+  const clipboard = useClipboard();
   
   // Check if user is a parent
   const userType = localStorage.getItem('thinkfirst_userType');
@@ -361,6 +366,17 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
             What do you want to understand today?
           </h2>
         </div>
+
+        {/* Clipboard Pill - shows when clipboard has text */}
+        <ClipboardPill
+          text={clipboard.text}
+          truncatedText={clipboard.truncatedText}
+          hasText={clipboard.hasText}
+          onPaste={(text) => {
+            setQuestionInput(text);
+          }}
+          onDismiss={clipboard.clearClipboard}
+        />
 
         {/* Input Field - more neutral styling */}
         <form onSubmit={handleSubmit} className="mb-6">
