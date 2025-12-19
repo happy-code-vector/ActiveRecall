@@ -93,8 +93,24 @@ const setLocalStorage = (key: string, value: string): void => {
   localStorage.setItem(key, value);
 };
 
+// Check if onboarding has been completed
+const hasCompletedOnboarding = (): boolean => {
+  return getLocalStorage('thinkfirst_onboardingComplete') === 'true';
+};
+
+// Mark onboarding as complete
+const markOnboardingComplete = (): void => {
+  setLocalStorage('thinkfirst_onboardingComplete', 'true');
+};
+
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
+  // Determine initial screen based on onboarding status
+  const getInitialScreen = (): Screen => {
+    if (typeof window === 'undefined') return 'splash';
+    return hasCompletedOnboarding() ? 'home' : 'splash';
+  };
+
+  const [currentScreen, setCurrentScreen] = useState<Screen>(getInitialScreen);
   const [userType, setUserType] = useState<'student' | 'parent' | null>(null);
   const [question, setQuestion] = useState('');
   const [attempt, setAttempt] = useState('');
@@ -108,9 +124,15 @@ export default function App() {
   const [nudgeNotifications, setNudgeNotifications] = useState<NudgeNotification[]>([]);
   const [_isHydrated, setIsHydrated] = useState(false);
   const [_streakFreezeState, setStreakFreezeState] = useState<StreakFreezeState | null>(null);
+  const [isViewingOnboarding, setIsViewingOnboarding] = useState(false);
 
   // Hydrate state from localStorage on client
   useEffect(() => {
+    // Check onboarding status and set initial screen
+    if (hasCompletedOnboarding()) {
+      setCurrentScreen('home');
+    }
+
     // User type
     const storedUserType = getLocalStorage('thinkfirst_userType');
     if (storedUserType) {
@@ -413,12 +435,24 @@ export default function App() {
 
   const handleNotificationEnable = () => {
     localStorage.setItem('thinkfirst_notificationEnabled', 'true');
-    setCurrentScreen('login');
+    // If viewing onboarding from settings, go back to home instead of login
+    if (isViewingOnboarding) {
+      setIsViewingOnboarding(false);
+      setCurrentScreen('home');
+    } else {
+      setCurrentScreen('login');
+    }
   };
 
   const handleNotificationSkip = () => {
     localStorage.setItem('thinkfirst_notificationEnabled', 'false');
-    setCurrentScreen('login');
+    // If viewing onboarding from settings, go back to home instead of login
+    if (isViewingOnboarding) {
+      setIsViewingOnboarding(false);
+      setCurrentScreen('home');
+    } else {
+      setCurrentScreen('login');
+    }
   };
 
   const handleStartTrial = (plan: 'solo' | 'family') => {
@@ -438,10 +472,32 @@ export default function App() {
   const handleLogin = () => setCurrentScreen('login');
 
   const handleLoginSubmit = (_email: string, _password: string) => {
+    // Mark onboarding as complete when user logs in
+    if (!isViewingOnboarding) {
+      markOnboardingComplete();
+    }
+    setIsViewingOnboarding(false);
     setCurrentScreen('home');
   };
 
   const handleSocialLogin = (_provider: 'apple' | 'google') => {
+    // Mark onboarding as complete when user logs in
+    if (!isViewingOnboarding) {
+      markOnboardingComplete();
+    }
+    setIsViewingOnboarding(false);
+    setCurrentScreen('home');
+  };
+
+  // Handler to view onboarding from settings
+  const handleViewOnboarding = () => {
+    setIsViewingOnboarding(true);
+    setCurrentScreen('splash');
+  };
+
+  // Handler for completing onboarding when viewing from settings
+  const handleOnboardingComplete = () => {
+    setIsViewingOnboarding(false);
     setCurrentScreen('home');
   };
 
@@ -748,6 +804,7 @@ export default function App() {
           onEditPassword={handleEditPassword}
           onLogOut={handleLogOut}
           onDeleteAccount={handleDeleteAccount}
+          onViewOnboarding={handleViewOnboarding}
         />
       )}
 

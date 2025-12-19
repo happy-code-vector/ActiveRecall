@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronRight, Trash2, BookOpen } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface SettingsScreenProps {
@@ -12,6 +12,7 @@ interface SettingsScreenProps {
   onDeleteAccount: () => void;
   notificationsEnabled?: boolean;
   onToggleNotifications?: (enabled: boolean) => void;
+  onViewOnboarding?: () => void;
 }
 
 export function SettingsScreen({
@@ -24,6 +25,7 @@ export function SettingsScreen({
   onDeleteAccount,
   notificationsEnabled = true,
   onToggleNotifications,
+  onViewOnboarding,
 }: SettingsScreenProps) {
   const [notifEnabled, setNotifEnabled] = useState(notificationsEnabled);
 
@@ -130,7 +132,30 @@ export function SettingsScreen({
           </div>
         </div>
 
-        {/* Group 3: Danger Zone */}
+        {/* Group 3: About */}
+        <div className="mt-8">
+          <div className="px-5 pb-2">
+            <p className="text-xs text-gray-500 uppercase tracking-wide">About</p>
+          </div>
+          
+          <div className="bg-black">
+            {/* View Onboarding */}
+            {onViewOnboarding && (
+              <button
+                onClick={onViewOnboarding}
+                className="w-full px-5 py-4 flex items-center justify-between border-b border-white/5 active:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <BookOpen className="w-5 h-5 text-purple-400" />
+                  <span className="text-white">View Introduction</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-600" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Group 4: Danger Zone */}
         <div className="mt-16">
           <div className="px-5 pb-2">
             <p className="text-xs text-gray-500 uppercase tracking-wide">Danger Zone</p>
