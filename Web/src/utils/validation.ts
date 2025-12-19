@@ -1,4 +1,46 @@
-import { DifficultyLevel } from '../App';
+// Difficulty level type (should match App.tsx when defined there)
+export type DifficultyLevel = 'base' | 'mid' | 'mastery';
+
+// Minimum word count for valid attempts
+export const MINIMUM_WORD_COUNT = 10;
+
+/**
+ * Count words in a text string
+ */
+export function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+}
+
+/**
+ * Validate minimum word count for an attempt
+ */
+export function validateMinimumWords(text: string, minWords: number = MINIMUM_WORD_COUNT): {
+  valid: boolean;
+  wordCount: number;
+  message?: string;
+} {
+  const wordCount = countWords(text);
+  
+  if (wordCount < minWords) {
+    return {
+      valid: false,
+      wordCount,
+      message: 'Add a bit more detail so I can understand you.',
+    };
+  }
+  
+  return {
+    valid: true,
+    wordCount,
+  };
+}
+
+/**
+ * Check if submit should be disabled based on word count
+ */
+export function isSubmitDisabled(text: string, minWords: number = MINIMUM_WORD_COUNT): boolean {
+  return countWords(text) < minWords;
+}
 
 // Simple keyword extraction and matching for validation
 function extractKeywords(text: string): string[] {
