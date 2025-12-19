@@ -21,6 +21,22 @@ const MAX_FAMILY_ACCOUNTS = 5;
 const CODE_PREFIX = 'FAM-';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluding confusing chars: I, O, 0, 1
 
+// SSR-safe localStorage access
+const getItem = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(key);
+};
+
+const setItem = (key: string, value: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, value);
+};
+
+const removeItem = (key: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(key);
+};
+
 /**
  * Generate a random 3-character code
  */
@@ -51,7 +67,7 @@ export function generateInviteCode(
   };
   
   // Store the invite code
-  localStorage.setItem(INVITE_CODE_KEY, JSON.stringify(inviteCode));
+  setItem(INVITE_CODE_KEY, JSON.stringify(inviteCode));
   
   return inviteCode;
 }
@@ -60,7 +76,7 @@ export function generateInviteCode(
  * Get the current invite code (for parents)
  */
 export function getInviteCode(): InviteCode | null {
-  const stored = localStorage.getItem(INVITE_CODE_KEY);
+  const stored = getItem(INVITE_CODE_KEY);
   if (stored) {
     try {
       return JSON.parse(stored);
