@@ -104,13 +104,8 @@ const markOnboardingComplete = (): void => {
 };
 
 export default function App() {
-  // Determine initial screen based on onboarding status
-  const getInitialScreen = (): Screen => {
-    if (typeof window === 'undefined') return 'splash';
-    return hasCompletedOnboarding() ? 'home' : 'splash';
-  };
-
-  const [currentScreen, setCurrentScreen] = useState<Screen>(getInitialScreen);
+  // Always start with 'splash' to avoid hydration mismatch, then update in useEffect
+  const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
   const [userType, setUserType] = useState<'student' | 'parent' | null>(null);
   const [question, setQuestion] = useState('');
   const [attempt, setAttempt] = useState('');
