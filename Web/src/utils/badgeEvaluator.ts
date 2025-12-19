@@ -26,11 +26,22 @@ export interface EarnedBadge {
 // Storage key for earned badges
 const EARNED_BADGES_KEY = 'thinkfirst_earned_badges';
 
+// SSR-safe localStorage access
+const getItem = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(key);
+};
+
+const setItem = (key: string, value: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, value);
+};
+
 /**
  * Get all earned badges from localStorage
  */
 export function getEarnedBadges(): EarnedBadge[] {
-  const stored = localStorage.getItem(EARNED_BADGES_KEY);
+  const stored = getItem(EARNED_BADGES_KEY);
   if (stored) {
     try {
       return JSON.parse(stored);
@@ -45,7 +56,7 @@ export function getEarnedBadges(): EarnedBadge[] {
  * Save earned badges to localStorage
  */
 function saveEarnedBadges(badges: EarnedBadge[]): void {
-  localStorage.setItem(EARNED_BADGES_KEY, JSON.stringify(badges));
+  setItem(EARNED_BADGES_KEY, JSON.stringify(badges));
 }
 
 /**

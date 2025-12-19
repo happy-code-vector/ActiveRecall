@@ -24,6 +24,17 @@ const HAPTIC_PATTERNS: Record<HapticPattern, number[]> = {
 // Storage key for haptic preference
 const HAPTIC_ENABLED_KEY = 'thinkfirst_haptics_enabled';
 
+// SSR-safe localStorage access
+const getItem = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(key);
+};
+
+const setItem = (key: string, value: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, value);
+};
+
 /**
  * Check if haptic feedback is supported
  */
@@ -37,10 +48,7 @@ export function isHapticSupported(): boolean {
  * Check if haptic feedback is enabled by user
  */
 export function isHapticEnabled(): boolean {
-  if (typeof localStorage === 'undefined') {
-    return true; // Default to enabled
-  }
-  const stored = localStorage.getItem(HAPTIC_ENABLED_KEY);
+  const stored = getItem(HAPTIC_ENABLED_KEY);
   return stored !== 'false'; // Default to enabled
 }
 
@@ -48,9 +56,7 @@ export function isHapticEnabled(): boolean {
  * Set haptic feedback preference
  */
 export function setHapticEnabled(enabled: boolean): void {
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem(HAPTIC_ENABLED_KEY, String(enabled));
-  }
+  setItem(HAPTIC_ENABLED_KEY, String(enabled));
 }
 
 /**

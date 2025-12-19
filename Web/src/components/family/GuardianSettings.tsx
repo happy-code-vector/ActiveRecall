@@ -17,11 +17,17 @@ interface GuardianSettingsProps {
   onShowWeeklyReport?: () => void;
 }
 
+// SSR-safe localStorage getter
+const getItem = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(key);
+};
+
 export function GuardianSettings({ onBack, onUpgrade, onShowDemo, onShowWeeklyReport }: GuardianSettingsProps) {
-  const isPremium = localStorage.getItem('thinkfirst_premium') === 'true';
-  const plan = localStorage.getItem('thinkfirst_plan') as 'solo' | 'family' | null;
-  const isGuardianPlan = isPremium && plan === 'family';
-  const userId = localStorage.getItem('thinkfirst_userId') || 'parent-default';
+  const [isPremium, setIsPremium] = useState(false);
+  const [plan, setPlan] = useState<'solo' | 'family' | null>(null);
+  const [userId, setUserId] = useState('parent-default');
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // PIN Modal state
   const [showPinModal, setShowPinModal] = useState(false);
@@ -29,37 +35,47 @@ export function GuardianSettings({ onBack, onUpgrade, onShowDemo, onShowWeeklyRe
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   // Card 1: Influence (The Soft Locks)
-  const [enableFrictionInterstitials, setEnableFrictionInterstitials] = useState(
-    localStorage.getItem('thinkfirst_frictionInterstitials') !== 'false'
-  );
-  const [requireReason, setRequireReason] = useState(
-    localStorage.getItem('thinkfirst_requireReason') !== 'false'
-  );
+  const [enableFrictionInterstitials, setEnableFrictionInterstitials] = useState(true);
+  const [requireReason, setRequireReason] = useState(true);
   
   // Card 1.5: Hard Locks (Guardian Controls)
-  const guardianSettings = getGuardianSettings();
-  const [forceMasteryMode, setForceMasteryMode] = useState(guardianSettings?.forceMasteryMode ?? false);
-  const [blockMercyButton, setBlockMercyButton] = useState(guardianSettings?.blockMercyButton ?? false);
+  const [forceMasteryMode, setForceMasteryMode] = useState(false);
+  const [blockMercyButton, setBlockMercyButton] = useState(false);
 
   // Card 2: Transparency
-  const [reportEmail, setReportEmail] = useState(
-    localStorage.getItem('thinkfirst_guardianEmail') || ''
-  );
-  const [includeModeSwitch, setIncludeModeSwitch] = useState(
-    localStorage.getItem('thinkfirst_includeModeSwitch') !== 'false'
-  );
+  const [reportEmail, setReportEmail] = useState('');
+  const [includeModeSwitch, setIncludeModeSwitch] = useState(true);
   
   // Invite code
   const [inviteCode, setInviteCode] = useState(getInviteCode());
+
+  // Hydrate from localStorage
+  useEffect(() => {
+    setIsPremium(getItem('thinkfirst_premium') === 'true');
+    setPlan(getItem('thinkfirst_plan') as 'solo' | 'family' | null);
+    setUserId(getItem('thinkfirst_userId') || 'parent-default');
+    setEnableFrictionInterstitials(getItem('thinkfirst_frictionInterstitials') !== 'false');
+    setRequireReason(getItem('thinkfirst_requireReason') !== 'false');
+    setReportEmail(getItem('thinkfirst_guardianEmail') || '');
+    setIncludeModeSwitch(getItem('thinkfirst_includeModeSwitch') !== 'false');
+    
+    const guardianSettings = getGuardianSettings();
+    setForceMasteryMode(guardianSettings?.forceMasteryMode ?? false);
+    setBlockMercyButton(guardianSettings?.blockMercyButton ?? false);
+    
+    setIsHydrated(true);
+  }, []);
+
+  const isGuardianPlan = isPremium && plan === 'family';
   
   // Generate invite code if family plan and none exists
   useEffect(() => {
-    if (isGuardianPlan && !inviteCode) {
-      const subscriptionId = localStorage.getItem('thinkfirst_subscriptionId') || 'sub-default';
+    if (isHydrated && isGuardianPlan && !inviteCode) {
+      const subscriptionId = getItem('thinkfirst_subscriptionId') || 'sub-default';
       const newCode = generateInviteCode(userId, subscriptionId);
       setInviteCode(newCode);
     }
-  }, [isGuardianPlan, inviteCode, userId]);
+  }, [isHydrated, isGuardianPlan, inviteCode, userId]);
   
   // Require PIN for sensitive actions
   const requirePinForAction = (action: () => void) => {

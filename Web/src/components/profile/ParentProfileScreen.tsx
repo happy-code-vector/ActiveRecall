@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   User, 
@@ -47,11 +47,17 @@ export function ParentProfileScreen({
   streak, 
   userId = 'parent-demo-123' 
 }: ParentProfileScreenProps) {
-  const isPremium = localStorage.getItem('thinkfirst_premium') === 'true';
-  const plan = localStorage.getItem('thinkfirst_plan') as 'solo' | 'family' | null;
-  const [avatarUrl, setAvatarUrl] = useState<string>(
-    localStorage.getItem('thinkfirst_avatar') || ''
-  );
+  const [isPremium, setIsPremium] = useState(false);
+  const [plan, setPlan] = useState<'solo' | 'family' | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsPremium(localStorage.getItem('thinkfirst_premium') === 'true');
+      setPlan(localStorage.getItem('thinkfirst_plan') as 'solo' | 'family' | null);
+      setAvatarUrl(localStorage.getItem('thinkfirst_avatar') || '');
+    }
+  }, []);
   
   // Mock parent/family data
   const familyData = {

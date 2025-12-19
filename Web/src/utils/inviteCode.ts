@@ -174,10 +174,10 @@ export function linkStudentToFamily(
   inviteCode.linkedAccounts.push(studentUserId);
   
   // Update stored invite code
-  localStorage.setItem(INVITE_CODE_KEY, JSON.stringify(inviteCode));
+  setItem(INVITE_CODE_KEY, JSON.stringify(inviteCode));
   
   // Store family link for the student
-  localStorage.setItem(FAMILY_LINK_KEY, JSON.stringify({
+  setItem(FAMILY_LINK_KEY, JSON.stringify({
     familyCode: inviteCode.code,
     parentUserId: inviteCode.parentUserId,
     linkedAt: new Date().toISOString(),
@@ -195,7 +195,7 @@ export function getFamilyLinkStatus(): {
   parentUserId?: string;
   linkedAt?: string;
 } {
-  const stored = localStorage.getItem(FAMILY_LINK_KEY);
+  const stored = getItem(FAMILY_LINK_KEY);
   if (stored) {
     try {
       const data = JSON.parse(stored);
@@ -219,10 +219,10 @@ export function unlinkFromFamily(studentUserId: string): boolean {
     inviteCode.linkedAccounts = inviteCode.linkedAccounts.filter(
       id => id !== studentUserId
     );
-    localStorage.setItem(INVITE_CODE_KEY, JSON.stringify(inviteCode));
+    setItem(INVITE_CODE_KEY, JSON.stringify(inviteCode));
   }
   
-  localStorage.removeItem(FAMILY_LINK_KEY);
+  removeItem(FAMILY_LINK_KEY);
   return true;
 }
 

@@ -38,7 +38,14 @@ interface ProgressStats {
 }
 
 export function ProgressScreen({ userId, streak, onBack, onGoToHome, onGoToProgress, onGoToHistory, onGoToTechniques, onGoToParentDashboard }: ProgressScreenProps) {
-  const userType = localStorage.getItem('thinkfirst_userType') as 'student' | 'parent' | null;
+  const [userType, setUserType] = useState<'student' | 'parent' | null>(null);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setUserType(localStorage.getItem('thinkfirst_userType') as 'student' | 'parent' | null);
+    }
+  }, []);
+  
   const isParent = userType === 'parent';
   
   const [selectedChild, setSelectedChild] = useState<Child>(MOCK_CHILDREN[0]);

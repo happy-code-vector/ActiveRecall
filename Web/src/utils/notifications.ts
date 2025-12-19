@@ -24,6 +24,22 @@ const SCHEDULED_NOTIFICATIONS_KEY = 'thinkfirst_scheduled_notifications';
 const SESSION_COUNT_KEY = 'thinkfirst_session_count';
 const HIGH_EFFORT_COUNT_KEY = 'thinkfirst_high_effort_count';
 
+// SSR-safe localStorage access
+const getItem = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(key);
+};
+
+const setItem = (key: string, value: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, value);
+};
+
+const removeItem = (key: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(key);
+};
+
 // Notification messages
 const NOTIFICATION_MESSAGES = {
   day1: 'Nice effort today. Want to try one more?',
@@ -36,7 +52,7 @@ const NOTIFICATION_MESSAGES = {
  * Get notification configuration
  */
 export function getNotificationConfig(): NotificationConfig {
-  const stored = localStorage.getItem(NOTIFICATION_CONFIG_KEY);
+  const stored = getItem(NOTIFICATION_CONFIG_KEY);
   if (stored) {
     try {
       return JSON.parse(stored);
@@ -56,7 +72,7 @@ export function getNotificationConfig(): NotificationConfig {
  * Save notification configuration
  */
 export function saveNotificationConfig(config: NotificationConfig): void {
-  localStorage.setItem(NOTIFICATION_CONFIG_KEY, JSON.stringify(config));
+  setItem(NOTIFICATION_CONFIG_KEY, JSON.stringify(config));
 }
 
 /**
@@ -206,14 +222,14 @@ function saveScheduledNotification(notification: ScheduledNotification): void {
   const filtered = notifications.filter(n => n.type !== notification.type);
   filtered.push(notification);
   
-  localStorage.setItem(SCHEDULED_NOTIFICATIONS_KEY, JSON.stringify(filtered));
+  setItem(SCHEDULED_NOTIFICATIONS_KEY, JSON.stringify(filtered));
 }
 
 /**
  * Get all scheduled notifications
  */
 export function getScheduledNotifications(): ScheduledNotification[] {
-  const stored = localStorage.getItem(SCHEDULED_NOTIFICATIONS_KEY);
+  const stored = getItem(SCHEDULED_NOTIFICATIONS_KEY);
   if (stored) {
     try {
       return JSON.parse(stored);
@@ -241,7 +257,7 @@ export function checkAndSendDueNotifications(): void {
     }
   }
   
-  localStorage.setItem(SCHEDULED_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+  setItem(SCHEDULED_NOTIFICATIONS_KEY, JSON.stringify(notifications));
 }
 
 /**
@@ -249,7 +265,7 @@ export function checkAndSendDueNotifications(): void {
  */
 export function incrementSessionCount(): number {
   const count = getSessionCount() + 1;
-  localStorage.setItem(SESSION_COUNT_KEY, String(count));
+  setItem(SESSION_COUNT_KEY, String(count));
   return count;
 }
 
@@ -257,7 +273,7 @@ export function incrementSessionCount(): number {
  * Get current session count
  */
 export function getSessionCount(): number {
-  const stored = localStorage.getItem(SESSION_COUNT_KEY);
+  const stored = getItem(SESSION_COUNT_KEY);
   return stored ? parseInt(stored, 10) : 0;
 }
 
@@ -266,7 +282,7 @@ export function getSessionCount(): number {
  */
 export function incrementHighEffortCount(): number {
   const count = getHighEffortCount() + 1;
-  localStorage.setItem(HIGH_EFFORT_COUNT_KEY, String(count));
+  setItem(HIGH_EFFORT_COUNT_KEY, String(count));
   return count;
 }
 
@@ -274,7 +290,7 @@ export function incrementHighEffortCount(): number {
  * Get high effort unlock count
  */
 export function getHighEffortCount(): number {
-  const stored = localStorage.getItem(HIGH_EFFORT_COUNT_KEY);
+  const stored = getItem(HIGH_EFFORT_COUNT_KEY);
   return stored ? parseInt(stored, 10) : 0;
 }
 
@@ -294,5 +310,5 @@ export function shouldPromptForReview(): boolean {
  * Clear all scheduled notifications
  */
 export function clearScheduledNotifications(): void {
-  localStorage.removeItem(SCHEDULED_NOTIFICATIONS_KEY);
+  removeItem(SCHEDULED_NOTIFICATIONS_KEY);
 }

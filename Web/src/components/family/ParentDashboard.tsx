@@ -45,6 +45,18 @@ export function ParentDashboard({ onBack, userId, streak, onAddStudent, onViewLe
   ]);
   const [inviteCode, setInviteCode] = useState(getInviteCode());
   const [codeCopied, setCodeCopied] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [plan, setPlan] = useState<'solo' | 'family' | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Hydrate from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsPremium(localStorage.getItem('thinkfirst_premium') === 'true');
+      setPlan(localStorage.getItem('thinkfirst_plan') as 'solo' | 'family' | null);
+      setIsHydrated(true);
+    }
+  }, []);
 
   // Load child's activity data
   useEffect(() => {
@@ -52,18 +64,16 @@ export function ParentDashboard({ onBack, userId, streak, onAddStudent, onViewLe
     // For now, using mock data
   }, [selectedChild]);
 
-  const isPremium = localStorage.getItem('thinkfirst_premium') === 'true';
-  const plan = localStorage.getItem('thinkfirst_plan') as 'solo' | 'family' | null;
   const isGuardianPlan = isPremium && plan === 'family';
 
   // Generate invite code if family plan and none exists
   useEffect(() => {
-    if (isGuardianPlan && !inviteCode) {
-      const subscriptionId = localStorage.getItem('thinkfirst_subscriptionId') || 'sub-default';
+    if (isHydrated && isGuardianPlan && !inviteCode) {
+      const subscriptionId = typeof window !== 'undefined' ? localStorage.getItem('thinkfirst_subscriptionId') || 'sub-default' : 'sub-default';
       const newCode = generateInviteCode(userId, subscriptionId);
       setInviteCode(newCode);
     }
-  }, [isGuardianPlan, inviteCode, userId]);
+  }, [isHydrated, isGuardianPlan, inviteCode, userId]);
 
   const handleCopyInviteCode = () => {
     if (inviteCode) {
@@ -74,6 +84,10 @@ export function ParentDashboard({ onBack, userId, streak, onAddStudent, onViewLe
   };
 
   // If not premium, show the locked screen
+  if (!isHydrated) {
+    return <div className="min-h-screen bg-[#0A0A0A]" />;
+  }
+  
   if (!isPremium) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] relative overflow-hidden">

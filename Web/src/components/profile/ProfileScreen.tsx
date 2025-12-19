@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   User, 
@@ -52,12 +52,19 @@ export function ProfileScreen({
   streak, 
   userId = 'user-demo-123' 
 }: ProfileScreenProps) {
-  const userType = localStorage.getItem('thinkfirst_userType') as 'student' | 'parent' | null;
-  const isPremium = localStorage.getItem('thinkfirst_premium') === 'true';
-  const plan = localStorage.getItem('thinkfirst_plan') as 'solo' | 'family' | null;
-  const [avatarUrl, setAvatarUrl] = useState<string>(
-    localStorage.getItem('thinkfirst_avatar') || ''
-  );
+  const [userType, setUserType] = useState<'student' | 'parent' | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
+  const [plan, setPlan] = useState<'solo' | 'family' | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setUserType(localStorage.getItem('thinkfirst_userType') as 'student' | 'parent' | null);
+      setIsPremium(localStorage.getItem('thinkfirst_premium') === 'true');
+      setPlan(localStorage.getItem('thinkfirst_plan') as 'solo' | 'family' | null);
+      setAvatarUrl(localStorage.getItem('thinkfirst_avatar') || '');
+    }
+  }, []);
   
   // Mock user data
   const userData = {

@@ -105,27 +105,32 @@ const STARTER_CHALLENGES = [
 export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onGoToPricing, onGoToParentDashboard, onGoToProfile, onGoToTechniques, onLogin, onNudgeMember, streak }: HomeScreenProps) {
   const [questionInput, setQuestionInput] = useState('');
   const [isNewUser, setIsNewUser] = useState(false);
+  const [userType, setUserType] = useState<string | null>(null);
+  const [gradeLevel, setGradeLevel] = useState('college');
+  const [plan, setPlan] = useState<string | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
   
   // Clipboard detection
   const clipboard = useClipboard();
   
-  // Check if user is a parent
-  const userType = localStorage.getItem('thinkfirst_userType');
-  const isParent = userType === 'parent';
-  
   // Get subscription status
   const subscriptionStatus = getSubscriptionStatus();
 
-  // Get grade-appropriate example questions
-  const gradeLevel = localStorage.getItem('thinkfirst_userGrade') || 'college';
-  const EXAMPLE_QUESTIONS = EXAMPLE_QUESTIONS_BY_GRADE[gradeLevel] || EXAMPLE_QUESTIONS_BY_GRADE['college'];
-
-  // Check if user is new (no completed questions)
+  // Hydrate from localStorage
   useEffect(() => {
-    const history = localStorage.getItem('thinkfirst_history');
-    const hasHistory = history && JSON.parse(history).length > 0;
-    setIsNewUser(!hasHistory);
+    if (typeof window !== 'undefined') {
+      setUserType(localStorage.getItem('thinkfirst_userType'));
+      setGradeLevel(localStorage.getItem('thinkfirst_userGrade') || 'college');
+      setPlan(localStorage.getItem('thinkfirst_plan'));
+      const history = localStorage.getItem('thinkfirst_history');
+      const hasHistory = history && JSON.parse(history).length > 0;
+      setIsNewUser(!hasHistory);
+      setIsHydrated(true);
+    }
   }, []);
+  
+  const isParent = userType === 'parent';
+  const EXAMPLE_QUESTIONS = EXAMPLE_QUESTIONS_BY_GRADE[gradeLevel] || EXAMPLE_QUESTIONS_BY_GRADE['college'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -432,7 +437,7 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
         </div>
 
         {/* Section: Start Your Streak */}
-        {(isNewUser || (subscriptionStatus.isPremium && localStorage.getItem('thinkfirst_plan') === 'family')) && (
+        {(isNewUser || (subscriptionStatus.isPremium && plan === 'family')) && (
           <div className="mb-8">
             {/* Section Header */}
             <div className="mb-4 flex items-center gap-2">
@@ -443,7 +448,7 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
             </div>
 
             {/* Family Squad Streak Card - Only for Family Plan users */}
-            {subscriptionStatus.isPremium && localStorage.getItem('thinkfirst_plan') === 'family' && (
+            {subscriptionStatus.isPremium && plan === 'family' && (
               <div className="mb-6">
                 <FamilySquadStreakCard
                   streakDays={12}
