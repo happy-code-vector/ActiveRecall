@@ -48,6 +48,14 @@ export const EASING = {
   LINEAR: 'linear',
 } as const;
 
+// Easing curve as array for motion libraries (Framer Motion format)
+export const ANIMATION_EASING = {
+  easeInOut: [0.4, 0, 0.2, 1],
+  easeOut: [0, 0, 0.2, 1],
+  easeIn: [0.4, 0, 1, 1],
+  spring: [0.34, 1.56, 0.64, 1],
+} as const;
+
 // Animation presets for common use cases
 export const ANIMATION_PRESETS = {
   /** Button tap feedback */
