@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Badge Layout Guide - Export This</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0A0A0A;
+      padding: 40px;
+      color: white;
+    }
+
+    .artboard {
+      width: 375px;
+      background: #0A0A0A;
+      margin: 0 auto;
+      border: 2px solid #333;
+      position: relative;
+    }
+
+    .header {
+      padding: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #6B7280;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .pill {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .pill.active {
+      background: #8A2BE2;
+      color: white;
+    }
+
+    .pill.inactive {
+      background: rgba(255, 255, 255, 0.05);
+      color: #9CA3AF;
+    }
+
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      position: relative;
+    }
+
+    .badge {
+      aspect-ratio: 1;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge.unlocked {
+      background: linear-gradient(135deg, #FF6B35, #FF4500);
+    }
+
+    .badge.locked {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .icon {
+      font-size: 32px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    }
+
+    .lock-icon {
+      font-size: 24px;
+      opacity: 0.6;
+    }
+
+    .rarity-dot {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #9CA3AF;
+      box-shadow: 0 0 8px #9CA3AF;
+      border: 2px solid #0A0A0A;
+    }
+
+    /* Measurement annotations */
+    .measure {
+      position: absolute;
+      color: #00FF94;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+    }
+
+    .measure-line {
+      position: absolute;
+      background: #00FF94;
+    }
+
+    .measure-arrow {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-style: solid;
+    }
+
+    .legend {
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+    }
+
+    .legend-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #00FF94;
+    }
+
+    .legend-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .legend-item:last-child {
+      border-bottom: none;
+    }
+
+    .legend-label {
+      color: #9CA3AF;
+    }
+
+    .legend-value {
+      color: white;
+      font-weight: 600;
+    }
+
+    .spec-callout {
+      position: absolute;
+      background: rgba(0, 255, 148, 0.1);
+      border: 1px solid #00FF94;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #00FF94;
+      white-space: nowrap;
+    }
+
+    .dimension-line {
+      stroke: #00FF94;
+      stroke-width: 1;
+      fill: none;
+    }
+
+    .dimension-text {
+      fill: #00FF94;
+      font-size: 10px;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="font-size: 28px; margin-bottom: 8px; color: #00FF94;">Badge System Layout Guide</h1>
+    <p style="color: #6B7280;">Screenshot this page for your Figma reference</p>
+  </div>
+
+  <div class="artboard">
+    <!-- Header Section -->
+    <div class="header">
+      <div class="title">Badges & Achievements</div>
+      <div class="subtitle">4 of 21 earned</div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="content" style="position: relative;">
+      <!-- SVG for measurements -->
+      <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100;">
+        <!-- Horizontal padding measurement (left) -->
+        <line x1="0" y1="10" x2="24" y2="10" class="dimension-line" stroke-dasharray="2,2"/>
+        <line x1="24" y1="5" x2="24" y2="15" class="dimension-line"/>
+        <text x="12" y="8" class="dimension-text" text-anchor="middle">24px</text>
+        
+        <!-- Gap measurement between badges -->
+        <line x1="78" y1="85" x2="90" y2="85" class="dimension-line" stroke-dasharray="2,2"/>
+        <line x1="78" y1="80" x2="78" y2="90" class="dimension-line"/>
+        <line x1="90" y1="80" x2="90" y2="90" class="dimension-line"/>
+        <text x="84" y="82" class="dimension-text" text-anchor="middle">12px</text>
+      </svg>
+
+      <!-- Filter Pills -->
+      <div class="filter-pills">
+        <div class="pill active">All</div>
+        <div class="pill inactive">Streaks</div>
+        <div class="pill inactive">Mastery</div>
+        <div class="pill inactive">Milestones</div>
+        <div class="pill inactive">Effort</div>
+        <div class="pill inactive">Special</div>
+      </div>
+
+      <!-- Badge Grid with Annotations -->
+      <div class="badge-grid" style="position: relative;">
+        <!-- Row 1 -->
+        <div class="badge unlocked">
+          <div class="icon">🔥</div>
+          <div class="rarity-dot"></div>
+          <div class="spec-callout" style="top: -30px; left: 50%; transform: translateX(-50%);">80x80px</div>
+        </div>
+        <div class="badge unlocked" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
+          <div class="icon">👑</div>
+          <div class="rarity-dot" style="background: #A855F7; box-shadow: 0 0 8px #A855F7;"></div>
+        </div>
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="badge unlocked" style="background: linear-gradient(135deg, #8A2BE2, #6A1BB2);">
+          <div class="icon">🧠</div>
+          <div class="rarity-dot" style="background: #60A5FA; box-shadow: 0 0 8px #60A5FA;"></div>
+        </div>
+        <div class="badge unlocked" style="background: linear-gradient(135deg, #60A5FA, #3B82F6);">
+          <div class="icon">📖</div>
+          <div class="rarity-dot"></div>
+        </div>
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+
+        <!-- Row 4 -->
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="badge locked">
+          <div class="lock-icon">🔒</div>
+        </div>
+      </div>
+
+      <!-- Callout for badge size -->
+      <div class="spec-callout" style="bottom: -35px; left: 0;">
+        Badge: 1:1 ratio, 16px radius
+      </div>
+      <div class="spec-callout" style="bottom: -35px; right: 0;">
+        Rarity dot: 8px, 4px from corner
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="content">
+      <div class="legend">
+        <div class="legend-title">📐 Layout Specifications</div>
+        <div class="legend-item">
+          <span class="legend-label">Screen Width</span>
+          <span class="legend-value">375px (Mobile)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-label">Container Padding</span>
+          <span class="legend-value">24px (left/right)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-label">Grid Columns</span>
+          <span class="legend-value">4 columns</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-label">Gap Between Badges</span>
+          <span class="legend-value">12px</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-label">Badge Size</span>
+          <span class="legend-value">~78px × 78px (calculated)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-label">Badge Border Radius</span>
+          <span class="legend-value">16px</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-label">Icon Size (Unlocked)</span>
+          <span class="legend-value">32px</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-label">Icon Size (Locked)</span>
+          <span class="legend-value">24px</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-label">Rarity Dot</span>
+          <span class="legend-value">8px diameter, 4px offset</span>
+        </div>
+      </div>
+
+      <!-- Color Legend -->
+      <div class="legend" style="margin-top: 20px;">
+        <div class="legend-title">🎨 State Colors</div>
+        <div class="legend-item">
+          <span class="legend-label">Unlocked Background</span>
+          <span class="legend-value">Linear gradient (badge-specific)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-label">Locked Background</span>
+          <span class="legend-value">rgba(255, 255, 255, 0.05)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-label">Locked Border</span>
+          <span class="legend-value">rgba(255, 255, 255, 0.1)</span>
+        </div>
+      </div>
+
+      <!-- Rarity Colors -->
+      <div class="legend" style="margin-top: 20px;">
+        <div class="legend-title">💎 Rarity Tier Dots</div>
+        <div class="legend-item">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #9CA3AF; box-shadow: 0 0 8px #9CA3AF;"></div>
+            <span class="legend-label">Common</span>
+          </div>
+          <span class="legend-value">#9CA3AF</span>
+        </div>
+        <div class="legend-item">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #60A5FA; box-shadow: 0 0 8px #60A5FA;"></div>
+            <span class="legend-label">Rare</span>
+          </div>
+          <span class="legend-value">#60A5FA</span>
+        </div>
+        <div class="legend-item">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #A855F7; box-shadow: 0 0 8px #A855F7;"></div>
+            <span class="legend-label">Epic</span>
+          </div>
+          <span class="legend-value">#A855F7</span>
+        </div>
+        <div class="legend-item">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #FFD700; box-shadow: 0 0 8px #FFD700;"></div>
+            <span class="legend-label">Legendary</span>
+          </div>
+          <span class="legend-value">#FFD700</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Instructions -->
+  <div style="max-width: 375px; margin: 40px auto; text-align: center; color: #6B7280; font-size: 14px; line-height: 1.8;">
+    <p><strong style="color: #00FF94;">To use in Figma:</strong></p>
+    <p>1. Take a screenshot of the artboard above</p>
+    <p>2. Import into Figma as a reference layer</p>
+    <p>3. Use the measurements to create your grid layout</p>
+    <p>4. Refer to BADGE_SYSTEM_DESIGN_SPEC.md for all 21 badge gradients</p>
+    <p style="margin-top: 20px; font-size: 12px;">
+      Pro Tip: Set this as your artboard background and build on top of it
+    </p>
+  </div>
+</body>
+</html>
