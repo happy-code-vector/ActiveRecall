@@ -22,7 +22,22 @@ const LOCKOUT_KEY = 'thinkfirst_pin_lockout';
 // Constants
 const MAX_PIN_ATTEMPTS = 3;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
-const PIN_LENGTH = 4;
+
+// SSR-safe localStorage access
+const getItem = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(key);
+};
+
+const setItem = (key: string, value: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, value);
+};
+
+const removeItem = (key: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(key);
+};
 
 /**
  * Simple hash function for PIN (in production, use proper crypto)
@@ -59,7 +74,7 @@ export function hasGuardianPin(): boolean {
  * Get guardian settings
  */
 export function getGuardianSettings(): GuardianSettings | null {
-  const stored = localStorage.getItem(GUARDIAN_SETTINGS_KEY);
+  const stored = getItem(GUARDIAN_SETTINGS_KEY);
   if (stored) {
     try {
       return JSON.parse(stored);
@@ -95,7 +110,7 @@ export function createGuardianPin(pin: string): {
     updatedAt: new Date().toISOString(),
   };
   
-  localStorage.setItem(GUARDIAN_SETTINGS_KEY, JSON.stringify(settings));
+  setItem(GUARDIAN_SETTINGS_KEY, JSON.stringify(settings));
   resetPinAttempts();
   
   return { success: true };
@@ -183,7 +198,7 @@ export function changePin(currentPin: string, newPin: string): {
   
   settings.pinHash = hashPin(newPin);
   settings.updatedAt = new Date().toISOString();
-  localStorage.setItem(GUARDIAN_SETTINGS_KEY, JSON.stringify(settings));
+  setItem(GUARDIAN_SETTINGS_KEY, JSON.stringify(settings));
   
   return { success: true };
 }
@@ -211,7 +226,7 @@ export function updateGuardianSettings(
     updatedAt: new Date().toISOString(),
   };
   
-  localStorage.setItem(GUARDIAN_SETTINGS_KEY, JSON.stringify(updatedSettings));
+  setItem(GUARDIAN_SETTINGS_KEY, JSON.stringify(updatedSettings));
   return { success: true };
 }
 
@@ -233,24 +248,24 @@ export function isMercyButtonBlocked(): boolean {
 
 // PIN attempt tracking helpers
 function getPinAttempts(): number {
-  const stored = localStorage.getItem(PIN_ATTEMPTS_KEY);
+  const stored = getItem(PIN_ATTEMPTS_KEY);
   return stored ? parseInt(stored, 10) : 0;
 }
 
 function incrementPinAttempts(): number {
   const attempts = getPinAttempts() + 1;
-  localStorage.setItem(PIN_ATTEMPTS_KEY, String(attempts));
+  setItem(PIN_ATTEMPTS_KEY, String(attempts));
   return attempts;
 }
 
 function resetPinAttempts(): void {
-  localStorage.removeItem(PIN_ATTEMPTS_KEY);
-  localStorage.removeItem(LOCKOUT_KEY);
+  removeItem(PIN_ATTEMPTS_KEY);
+  removeItem(LOCKOUT_KEY);
 }
 
 function setLockout(): void {
   const lockoutUntil = Date.now() + LOCKOUT_DURATION_MS;
-  localStorage.setItem(LOCKOUT_KEY, String(lockoutUntil));
+  setItem(LOCKOUT_KEY, String(lockoutUntil));
 }
 
 function getLockoutStatus(): {
@@ -258,7 +273,7 @@ function getLockoutStatus(): {
   lockedUntil?: Date;
   remainingMs?: number;
 } {
-  const stored = localStorage.getItem(LOCKOUT_KEY);
+  const stored = getItem(LOCKOUT_KEY);
   if (!stored) {
     return { isLocked: false };
   }
@@ -282,7 +297,7 @@ function getLockoutStatus(): {
  * Reset guardian settings (for testing/recovery)
  */
 export function resetGuardianSettings(): void {
-  localStorage.removeItem(GUARDIAN_SETTINGS_KEY);
-  localStorage.removeItem(PIN_ATTEMPTS_KEY);
-  localStorage.removeItem(LOCKOUT_KEY);
+  removeItem(GUARDIAN_SETTINGS_KEY);
+  removeItem(PIN_ATTEMPTS_KEY);
+  removeItem(LOCKOUT_KEY);
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Unlock, Share2 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Evaluation } from '../../App';
+import { Evaluation } from '@/context/AppContext';
 import { ShareCard } from '../shared/ShareCard';
 import { EvaluationLoadingState } from './EvaluationLoadingState';
 import { triggerUnlockHaptic } from '../../utils/haptics';
@@ -70,7 +70,7 @@ export function EvaluationScreen({
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[150px] pointer-events-none" />
         
         <div className="relative flex-1 flex items-center justify-center px-6">
-          <EvaluationLoadingState />
+          <EvaluationLoadingState isLoading={true} />
         </div>
         
         {/* Back button during loading */}

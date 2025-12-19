@@ -28,10 +28,21 @@ const STORAGE_KEY = 'thinkfirst_streak_freeze';
 const STREAK_KEY = 'thinkfirst_streak';
 const LAST_ACTIVITY_KEY = 'thinkfirst_last_activity';
 
+// SSR-safe localStorage access
+const getItem = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(key);
+};
+
+const setItem = (key: string, value: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, value);
+};
+
 // Default configuration
 const DEFAULT_CONFIG: StreakResetConfig = {
   resetHour: 3,
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  timezone: typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC',
 };
 
 // Freeze grants per plan type
@@ -46,7 +57,7 @@ export const FREEZE_GRANTS = {
  * Get the current streak freeze state from localStorage
  */
 export function getStreakFreezeState(): StreakFreezeState {
-  const stored = localStorage.getItem(STORAGE_KEY);
+  const stored = getItem(STORAGE_KEY);
   if (stored) {
     try {
       return JSON.parse(stored);
@@ -66,7 +77,7 @@ export function getStreakFreezeState(): StreakFreezeState {
  * Save streak freeze state to localStorage
  */
 export function saveStreakFreezeState(state: StreakFreezeState): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 /**
@@ -221,7 +232,7 @@ export function checkAndProtectStreak(
   freezeUsed: boolean;
   source: 'personal' | 'family_pool' | null;
 } {
-  const lastActivityStr = localStorage.getItem(LAST_ACTIVITY_KEY);
+  const lastActivityStr = getItem(LAST_ACTIVITY_KEY);
   if (!lastActivityStr) {
     return { streakPreserved: true, freezeUsed: false, source: null };
   }
@@ -261,7 +272,7 @@ export function checkAndProtectStreak(
  * Record activity for streak tracking
  */
 export function recordActivity(): void {
-  localStorage.setItem(LAST_ACTIVITY_KEY, new Date().toISOString());
+  setItem(LAST_ACTIVITY_KEY, new Date().toISOString());
 }
 
 /**

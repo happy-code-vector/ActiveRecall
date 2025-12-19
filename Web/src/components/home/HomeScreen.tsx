@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Crown, UserCircle, Sparkles, Brain, Atom, Landmark, Lightbulb } from 'lucide-react';
-import { StreakData } from '../../App';
+import { StreakData } from '@/context/AppContext';
 import { motion } from 'motion/react';
 import { BottomNav } from './BottomNav';
 import { FamilySquadStreakCard } from '../family/FamilySquadStreakCard';
@@ -69,28 +69,36 @@ const STARTER_CHALLENGES = [
     icon: Atom,
     title: 'Science',
     question: 'How does photosynthesis work?',
+    description: 'Explore how plants convert light into energy',
     gradient: 'from-purple-500 to-violet-500',
+    glowColor: 'rgba(139, 92, 246, 0.5)',
   },
   {
     id: 'math',
     icon: Brain,
     title: 'Math',
     question: 'What is the Pythagorean theorem?',
+    description: 'Discover the relationship between triangle sides',
     gradient: 'from-cyan-500 to-blue-500',
+    glowColor: 'rgba(6, 182, 212, 0.5)',
   },
   {
     id: 'history',
     icon: Landmark,
     title: 'History',
     question: 'What caused World War II?',
+    description: 'Understand the events that shaped the 20th century',
     gradient: 'from-amber-500 to-orange-500',
+    glowColor: 'rgba(245, 158, 11, 0.5)',
   },
   {
     id: 'concepts',
     icon: Lightbulb,
     title: 'Concepts',
     question: 'What is artificial intelligence?',
+    description: 'Learn about machines that think and learn',
     gradient: 'from-yellow-500 to-amber-500',
+    glowColor: 'rgba(234, 179, 8, 0.5)',
   },
 ];
 

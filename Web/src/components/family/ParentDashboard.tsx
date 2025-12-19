@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft, TrendingUp, Flame, BookOpen, AlertCircle, ChevronDown, Check, Users, Copy } from 'lucide-react';
-import { StreakData } from '../../App';
+import { StreakData } from '@/context/AppContext';
 import { getInviteCode, generateInviteCode, getAvailableFamilySlots } from '../../utils/inviteCode';
 
 interface Child {

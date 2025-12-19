@@ -1,6 +1,6 @@
 import { BarChart3, Clock, Brain, Home } from 'lucide-react';
 import { motion } from 'motion/react';
-import { StreakData } from '../../App';
+import { StreakData } from '@/context/AppContext';
 import { ANIMATION_DURATION } from '../../utils/animationTiming';
 
 interface BottomNavProps {

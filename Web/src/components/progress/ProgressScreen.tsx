@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, TrendingUp, Target, Flame, ChevronDown, Check } from 'lucide-react';
 import { motion } from 'motion/react';
-import { StreakData } from '../../App';
+import { StreakData } from '@/context/AppContext';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { BottomNav } from '../home/BottomNav';
 import { ProgressTimeline, generateTimelineData, DayNode } from './ProgressTimeline';

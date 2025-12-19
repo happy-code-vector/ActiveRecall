@@ -1,5 +1,5 @@
 import { CheckCircle2, Home, ArrowRight, Sparkles, Lightbulb, X } from 'lucide-react';
-import { Evaluation, StreakData } from '../../App';
+import { Evaluation, StreakData } from '@/context/AppContext';
 import { useState } from 'react';
 
 interface AnswerScreenProps {

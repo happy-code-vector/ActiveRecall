@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Lightbulb, Lock, Unlock } from 'lucide-react';
-import { DifficultyLevel } from '../../App';
+import { DifficultyLevel } from '@/context/AppContext';
 import { validateAnswer } from '../../utils/validation';
 import { getDetailedAnswer } from '../../utils/answers';
 

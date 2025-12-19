@@ -15,10 +15,21 @@ export interface SubscriptionStatus {
   canViewAdvancedStats: boolean;
 }
 
+// SSR-safe localStorage access
+const getItem = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(key);
+};
+
+const setItem = (key: string, value: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, value);
+};
+
 // Get current subscription status
 export function getSubscriptionStatus(): SubscriptionStatus {
-  const isPremium = localStorage.getItem('thinkfirst_premium') === 'true';
-  const planString = localStorage.getItem('thinkfirst_plan') || 'free';
+  const isPremium = getItem('thinkfirst_premium') === 'true';
+  const planString = getItem('thinkfirst_plan') || 'free';
   const plan = (isPremium ? planString : 'free') as PlanType;
 
   // Get questions asked today
@@ -43,13 +54,13 @@ export function getSubscriptionStatus(): SubscriptionStatus {
 // Track questions asked today
 export function getQuestionsToday(): number {
   const today = new Date().toDateString();
-  const stored = localStorage.getItem('thinkfirst_questions_date');
-  const count = parseInt(localStorage.getItem('thinkfirst_questions_count') || '0', 10);
+  const stored = getItem('thinkfirst_questions_date');
+  const count = parseInt(getItem('thinkfirst_questions_count') || '0', 10);
 
   // Reset if it's a new day
   if (stored !== today) {
-    localStorage.setItem('thinkfirst_questions_date', today);
-    localStorage.setItem('thinkfirst_questions_count', '0');
+    setItem('thinkfirst_questions_date', today);
+    setItem('thinkfirst_questions_count', '0');
     return 0;
   }
 
@@ -59,14 +70,14 @@ export function getQuestionsToday(): number {
 // Increment question count
 export function incrementQuestionCount(): void {
   const today = new Date().toDateString();
-  const stored = localStorage.getItem('thinkfirst_questions_date');
+  const stored = getItem('thinkfirst_questions_date');
   
   if (stored !== today) {
-    localStorage.setItem('thinkfirst_questions_date', today);
-    localStorage.setItem('thinkfirst_questions_count', '1');
+    setItem('thinkfirst_questions_date', today);
+    setItem('thinkfirst_questions_count', '1');
   } else {
-    const count = parseInt(localStorage.getItem('thinkfirst_questions_count') || '0', 10);
-    localStorage.setItem('thinkfirst_questions_count', String(count + 1));
+    const count = parseInt(getItem('thinkfirst_questions_count') || '0', 10);
+    setItem('thinkfirst_questions_count', String(count + 1));
   }
 }
 

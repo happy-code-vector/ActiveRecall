@@ -122,7 +122,7 @@ Love you! ❤️`;
               {/* Share Options */}
               <div className="px-6 pb-8 space-y-3">
                 {/* Native Share (if supported) */}
-                {navigator.share && (
+                {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
                   <motion.button
                     onClick={handleNativeShare}
                     className="w-full py-4 px-6 rounded-2xl flex items-center gap-4 transition-all"

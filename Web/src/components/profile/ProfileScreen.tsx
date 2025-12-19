@@ -14,7 +14,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { BottomNav } from '../home/BottomNav';
-import { StreakData } from '../../App';
+import { StreakData } from '@/context/AppContext';
 import { AvatarUploader } from './AvatarUploader';
 
 interface ProfileScreenProps {

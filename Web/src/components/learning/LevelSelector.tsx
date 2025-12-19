@@ -1,5 +1,5 @@
 import { Brain, Target, Trophy } from 'lucide-react';
-import { DifficultyLevel } from '../../App';
+import { DifficultyLevel } from '@/context/AppContext';
 
 interface LevelSelectorProps {
   onSelectLevel: (level: DifficultyLevel) => void;

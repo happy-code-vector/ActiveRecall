@@ -14,7 +14,7 @@ import {
   Lightbulb
 } from 'lucide-react';
 import { BottomNav } from '../home/BottomNav';
-import { StreakData } from '../../App';
+import { StreakData } from '@/context/AppContext';
 
 interface TechniquesScreenProps {
   onBack: () => void;

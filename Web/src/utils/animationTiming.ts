@@ -102,7 +102,7 @@ export const ANIMATION_PRESETS = {
     duration: ANIMATION_DURATION.FAST,
     easing: EASING.EASE_IN_OUT,
     keyframes: {
-      x: [0, -10, 10, -10, 10, 0],
+      x: [0, -10, 10, -10, 10, 0] as number[],
     },
   },
 } as const;
