@@ -47,9 +47,14 @@ app.post('/make-server-a0e3c496/evaluate', async (c) => {
 
     const gradeContext = gradeContexts[gradeLevel] || gradeContexts['college'];
 
-    const standardPrompt = `You are an educational AI evaluator for ThinkFirst, an app that promotes active recall learning.
+    // SOCRATIC AI CONSTRAINTS: Never give direct answers, use guiding questions, limit feedback to 1-2 sentences
+    const standardPrompt = `You are a SOCRATIC educational AI evaluator for ThinkFirst.
 
-Evaluate the student's attempt to answer the question. Be supportive and encouraging while being honest about their understanding.
+CRITICAL RULES - YOU MUST FOLLOW THESE:
+1. NEVER give direct answers or explanations in feedback
+2. ALWAYS use guiding questions to lead the student to discover answers themselves
+3. Keep ALL feedback to 1-2 sentences maximum
+4. Your role is to GUIDE, not TEACH directly
 
 Question: "${question}"
 Student's Attempt: "${attempt}"
@@ -67,95 +72,96 @@ Provide a JSON evaluation with:
    - 2: Shows good understanding with minor gaps
    - 3: Shows strong, accurate understanding
 
-3. copied (boolean): Does this look like it was copied from AI or another source? Check for overly formal language, perfect formatting, or suspiciously complete answers that don't match typical student writing.
+3. copied (boolean): Does this look like it was copied from AI or another source?
 
-4. what_is_right (string): 2-3 sentences praising what they got right or understood well. Be specific and encouraging.
+4. what_is_right (string): 1-2 sentences ONLY. Acknowledge what they understood using a question format. Example: "You've grasped that plants need sunlight - what role does it play in the process?"
 
-5. what_is_missing (string): 2-3 sentences about what's missing or could be improved. Be constructive and helpful.
+5. what_is_missing (string): 1-2 sentences ONLY. Use a SOCRATIC QUESTION to guide them toward what's missing. NEVER explain the answer. Example: "What happens to the water after it enters the leaf?"
 
-6. coach_hint (string): ONE SHORT QUESTION ONLY - A minimal, targeted hint for revision mode. Max 15 words. Point out a specific gap or vague term they used, then ask them to be more specific. Examples:
-   - "You mentioned 'food' generally. Can you identify the specific sugar plants create?"
-   - "What specific process do the mitochondria perform?"
-   - "You said 'it happens fast.' What causes this speed?"
-   Keep it brief, direct, and focused on ONE missing detail. Force recall, don't explain.
+6. coach_hint (string): ONE guiding question (max 12 words). Point to a gap without revealing the answer. Examples:
+   - "What specific molecule do plants produce?"
+   - "Where does the energy transformation occur?"
 
-7. level_up_tip (string, optional): If unlock=true BUT scores aren't perfect (effort_score < 3 OR understanding_score < 3), provide ONE actionable tip (max 20 words) on how to strengthen their recall/explanation for next time. Frame it positively as a "pro move" not a criticism. Examples:
-   - "Next time, explain the 'why' behind the process - it strengthens long-term memory."
-   - "Try adding a real-world example to anchor your explanation."
-   - "Great start! Add one more detail about the mechanism for mastery."
-   Keep it aspirational and growth-focused. Only include if unlock=true and there's room for improvement.
+7. level_up_tip (string, optional): If unlock=true but not perfect scores, ONE question-based tip (max 15 words). Example: "What would happen if you explained the 'why' behind each step?"
 
-8. unlock (boolean): Should they unlock the full answer?
-   - true if effort_score >= 2 OR understanding_score >= 2
-   - false if copied = true
-   - false if both scores are < 2
+8. unlock (boolean): true if effort_score >= 2 OR understanding_score >= 2, false if copied
 
-9. full_explanation (string): A comprehensive, clear explanation of the concept. Make it educational, accurate, and easy to understand. Include key points, examples if relevant, and why it matters.
+9. full_explanation (string): ONLY provided when unlock=true. Comprehensive explanation of the concept.
 
 Return ONLY valid JSON, no other text.`;
 
-    const masteryPrompt = `You are an educational AI evaluator for ThinkFirst, an app that promotes active recall learning.
+    // MASTERY MODE with SOCRATIC constraints - higher standards, still no direct answers
+    const masteryPrompt = `You are a SOCRATIC educational AI evaluator for ThinkFirst MASTERY MODE.
 
-The student has chosen MASTERY MODE - they want a rigorous challenge and are aiming for 2x streak points and a gold badge.
+CRITICAL RULES - YOU MUST FOLLOW THESE:
+1. NEVER give direct answers or explanations in feedback
+2. ALWAYS use challenging guiding questions
+3. Keep ALL feedback to 1-2 sentences maximum
+4. MASTERY MODE demands deeper thinking - ask harder questions
 
 Question: "${question}"
 Student's Attempt: "${attempt}"
 
-Provide a JSON evaluation with HIGHER STANDARDS:
-1. effort_score (0-3): How much effort did they put in? MASTERY MODE: Expect detailed, comprehensive explanations.
-   - 0: No real effort, empty or nonsensical
-   - 1: Minimal effort, too brief for mastery mode
-   - 2: Good effort with meaningful depth
-   - 3: Exceptional effort with thorough detail
+Provide a JSON evaluation with MASTERY STANDARDS:
+1. effort_score (0-3): MASTERY expects comprehensive explanations.
+   - 0: No real effort
+   - 1: Too brief for mastery
+   - 2: Good depth
+   - 3: Exceptional thoroughness
 
-2. understanding_score (0-3): How well do they understand the concept? MASTERY MODE: Demand precision and completeness.
-   - 0: Shows no understanding
-   - 1: Shows partial understanding but lacks depth
-   - 2: Shows strong understanding with good detail
-   - 3: Shows exceptional, nuanced understanding
+2. understanding_score (0-3): MASTERY demands precision.
+   - 0: No understanding
+   - 1: Partial, lacks depth
+   - 2: Strong with good detail
+   - 3: Exceptional, nuanced
 
-3. copied (boolean): Does this look like it was copied from AI or another source? In mastery mode, be extra vigilant.
+3. copied (boolean): Extra vigilant in mastery mode.
 
-4. what_is_right (string): 2-3 sentences praising what they got right. Acknowledge their mastery attempt.
+4. what_is_right (string): 1-2 sentences ONLY. Acknowledge mastery-level thinking with a probing question. Example: "You've identified the key mechanism - can you explain why it's essential?"
 
-5. what_is_missing (string): 2-3 sentences about what's missing. Be more demanding - point out nuances, examples, or depth that's missing.
+5. what_is_missing (string): 1-2 sentences ONLY. Use a CHALLENGING SOCRATIC QUESTION. Demand nuance. Example: "What edge cases or exceptions might affect this process?"
 
-6. coach_hint (string): ONE SHORT QUESTION ONLY - A minimal, targeted hint for revision mode. Max 15 words. Point out a specific gap or vague term they used, then ask them to be more specific. Examples:
-   - "You mentioned 'food' generally. Can you identify the specific sugar plants create?"
-   - "What specific process do the mitochondria perform?"
-   - "You said 'it happens fast.' What causes this speed?"
-   Keep it brief, direct, and focused on ONE missing detail. Force recall, don't explain.
+6. coach_hint (string): ONE challenging question (max 12 words). Push for deeper analysis.
 
-7. level_up_tip (string, optional): If unlock=true BUT scores aren't perfect (effort_score < 3 OR understanding_score < 3), provide ONE actionable tip (max 20 words) on how to strengthen their recall/explanation for next time. Frame it positively as a "pro move" not a criticism. Examples:
-   - "Next time, explain the 'why' behind the process - it strengthens long-term memory."
-   - "Try adding a real-world example to anchor your explanation."
-   - "Great start! Add one more detail about the mechanism for mastery."
-   Keep it aspirational and growth-focused. Only include if unlock=true and there's room for improvement.
+7. level_up_tip (string, optional): If unlock=true but not perfect, ONE mastery-focused question (max 15 words).
 
-8. unlock (boolean): Should they unlock the full answer? MASTERY MODE REQUIREMENTS:
-   - true ONLY if effort_score >= 3 AND understanding_score >= 2
-   - false if copied = true
-   - false if they haven't shown sufficient mastery-level work
+8. unlock (boolean): MASTERY REQUIREMENTS - true ONLY if effort_score >= 3 AND understanding_score >= 2, false if copied
 
-9. full_explanation (string): A comprehensive, clear explanation of the concept with extra depth for mastery-level learners.
+9. full_explanation (string): ONLY when unlock=true. Advanced explanation with nuances for mastery learners.
 
-10. masteryAchieved (boolean): true if unlock is true (they met mastery standards)
+10. masteryAchieved (boolean): true if unlock is true
 
 Return ONLY valid JSON, no other text.`;
 
     const prompt = masteryMode ? masteryPrompt : standardPrompt;
 
-    console.log(`Calling OpenAI API for evaluation... Mode: ${masteryMode ? 'MASTERY' : 'STANDARD'}`);
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // DYNAMIC MODEL ROUTING:
+    // Phase 1 (Evaluation): Use GPT-4o-mini for cost efficiency
+    // Phase 2 (Unlock Explanation): Use GPT-4o for quality when generating full_explanation
+    const EVALUATION_MODEL = 'gpt-4o-mini';  // Fast, cheap for scoring
+    const EXPLANATION_MODEL = 'gpt-4o';       // High quality for explanations
+
+    console.log(`Calling OpenAI API for evaluation... Mode: ${masteryMode ? 'MASTERY' : 'STANDARD'}, Model: ${EVALUATION_MODEL}`);
+    
+    // Phase 1: Evaluation with GPT-4o-mini (without full_explanation)
+    const evalPromptWithoutExplanation = prompt.replace(
+      '9. full_explanation (string): ONLY provided when unlock=true. Comprehensive explanation of the concept.',
+      '9. full_explanation (string): Leave as empty string "" - will be generated separately if unlock=true.'
+    ).replace(
+      '9. full_explanation (string): ONLY when unlock=true. Advanced explanation with nuances for mastery learners.',
+      '9. full_explanation (string): Leave as empty string "" - will be generated separately if unlock=true.'
+    );
+
+    const evalResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: EVALUATION_MODEL,
         messages: [
-          { role: 'system', content: `${gradeContext}\n${prompt}` },
+          { role: 'system', content: `${gradeContext}\n${evalPromptWithoutExplanation}` },
           { role: 'user', content: `Question: ${question}\nAttempt: ${attempt}` }
         ],
         temperature: 0.7,
@@ -163,21 +169,60 @@ Return ONLY valid JSON, no other text.`;
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error response:', response.status, errorText);
-      return c.json({ error: `AI evaluation failed: ${response.status} - ${errorText}` }, 500);
+    if (!evalResponse.ok) {
+      const errorText = await evalResponse.text();
+      console.error('OpenAI API error response:', evalResponse.status, errorText);
+      return c.json({ error: `AI evaluation failed: ${evalResponse.status} - ${errorText}` }, 500);
     }
 
-    const data = await response.json();
+    const evalData = await evalResponse.json();
     
-    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
-      console.error('Invalid OpenAI response structure:', JSON.stringify(data));
+    if (!evalData.choices || !evalData.choices[0] || !evalData.choices[0].message || !evalData.choices[0].message.content) {
+      console.error('Invalid OpenAI response structure:', JSON.stringify(evalData));
       return c.json({ error: 'Invalid response from AI service' }, 500);
     }
 
-    console.log('OpenAI response received, parsing evaluation...');
-    const evaluation = JSON.parse(data.choices[0].message.content);
+    console.log('Evaluation response received, parsing...');
+    const evaluation = JSON.parse(evalData.choices[0].message.content);
+
+    // Phase 2: If unlock=true, generate full_explanation with GPT-4o (higher quality)
+    if (evaluation.unlock) {
+      console.log(`Generating full explanation with ${EXPLANATION_MODEL}...`);
+      
+      const explanationPrompt = masteryMode
+        ? `Provide a comprehensive, advanced explanation for a mastery-level learner. Include nuances, edge cases, and deeper insights. Be thorough but clear.`
+        : `Provide a clear, educational explanation suitable for the student's level. Include key points, examples if helpful, and why this matters.`;
+
+      const explainResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: EXPLANATION_MODEL,
+          messages: [
+            { role: 'system', content: `${gradeContext}\n${explanationPrompt}` },
+            { role: 'user', content: `Question: ${question}\n\nProvide a complete, accurate explanation.` }
+          ],
+          temperature: 0.7,
+          max_tokens: 1000,
+        }),
+      });
+
+      if (explainResponse.ok) {
+        const explainData = await explainResponse.json();
+        if (explainData.choices?.[0]?.message?.content) {
+          evaluation.full_explanation = explainData.choices[0].message.content;
+          console.log('Full explanation generated successfully');
+        }
+      } else {
+        console.error('Failed to generate explanation, using fallback');
+        evaluation.full_explanation = 'Great effort! The full explanation is being prepared. Please check back shortly.';
+      }
+    } else {
+      evaluation.full_explanation = '';
+    }
 
     // Store the attempt in history if userId provided
     if (userId) {
