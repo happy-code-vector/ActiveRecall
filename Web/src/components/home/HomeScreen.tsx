@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Crown, UserCircle, Sparkles, Brain, Atom, Landmark, Lightbulb } from 'lucide-react';
 import { StreakData } from '@/context/AppContext';
 import { motion } from 'motion/react';
@@ -109,6 +109,38 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
   const [gradeLevel, setGradeLevel] = useState('college');
   const [plan, setPlan] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
+  
+  // Drag scroll for carousel
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftPos, setScrollLeftPos] = useState(0);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeftPos(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseLeave = () => setIsDragging(false);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeftPos - walk;
+  };
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const cardWidth = 256 + 16; // w-64 + gap-4
+    const index = Math.round(scrollRef.current.scrollLeft / cardWidth);
+    setActiveCardIndex(Math.min(index, STARTER_CHALLENGES.length - 1));
+  };
   
   // Clipboard detection
   const clipboard = useClipboard();
@@ -503,7 +535,15 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
                 {/* Horizontal Scroll Container */}
-                <div className="overflow-x-auto scrollbar-hide">
+                <div
+                  ref={scrollRef}
+                  className={`overflow-x-auto scrollbar-hide select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+                  onMouseDown={handleMouseDown}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseLeave}
+                  onMouseMove={handleMouseMove}
+                  onScroll={handleScroll}
+                >
                   <div className="flex gap-4 px-6 pb-2">
                     {STARTER_CHALLENGES.map((challenge, index) => {
                       const Icon = challenge.icon;
@@ -622,13 +662,17 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
                   </div>
                 </div>
 
-                {/* Scroll hint */}
-                <div className="px-6 mt-3 flex items-center gap-2">
-                  <div className="flex gap-1">
+                {/* Scroll hint - centered */}
+                <div className="mt-3 flex flex-col items-center gap-2">
+                  <div className="flex gap-1.5">
                     {STARTER_CHALLENGES.map((_, i) => (
                       <div
                         key={i}
-                        className="w-1.5 h-1.5 rounded-full bg-gray-700"
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          i === activeCardIndex
+                            ? 'w-4 bg-violet-500'
+                            : 'w-1.5 bg-gray-700'
+                        }`}
                       />
                     ))}
                   </div>
