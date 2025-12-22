@@ -279,7 +279,7 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
             </div>
 
             {/* Question Counter Badge - Only for free users */}
-            {!subscriptionStatus.isPremium && (
+            {isHydrated && !subscriptionStatus.isPremium && (
               <motion.div
                 className="mt-4 inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 backdrop-blur-sm border border-white/10"
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -309,7 +309,7 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
         </div>
 
         {/* Upgrade Banner - Only shown to free users */}
-        {!subscriptionStatus.isPremium && onGoToPricing && (
+        {isHydrated && !subscriptionStatus.isPremium && onGoToPricing && (
           <motion.button
             onClick={onGoToPricing}
             className="w-full relative overflow-hidden rounded-2xl p-4 mb-6"
@@ -469,7 +469,7 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
         </div>
 
         {/* Section: Start Your Streak */}
-        {(isNewUser || (subscriptionStatus.isPremium && plan === 'family')) && (
+        {isHydrated && (isNewUser || (subscriptionStatus.isPremium && plan === 'family')) && (
           <div className="mb-8">
             {/* Section Header */}
             <div className="mb-4 flex items-center gap-2">
@@ -480,7 +480,7 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
             </div>
 
             {/* Family Squad Streak Card - Only for Family Plan users */}
-            {subscriptionStatus.isPremium && plan === 'family' && (
+            {isHydrated && subscriptionStatus.isPremium && plan === 'family' && (
               <div className="mb-6">
                 <FamilySquadStreakCard
                   streakDays={12}
