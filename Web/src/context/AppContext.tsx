@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { projectId, publicAnonKey } from '@/utils/supabase/info';
+import { supabase } from '@/utils/supabase/client';
 import { 
   getStreakFreezeState, 
   consumeFreeze, 
@@ -174,52 +175,63 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [userId]);
 
-  // Hydrate from localStorage
+  // Hydrate from localStorage and auth
   useEffect(() => {
-    const storedUserType = getLocalStorage('thinkfirst_userType');
-    if (storedUserType) {
-      setUserTypeState(storedUserType as 'student' | 'parent');
-    }
-
-    const storedUnlocks = getLocalStorage('thinkfirst_dailyUnlocks');
-    if (storedUnlocks) {
-      const data = JSON.parse(storedUnlocks);
-      const today = new Date().toDateString();
-      if (data.date === today) {
-        setDailyUnlockCount(data.count || 0);
+    const initializeUser = async () => {
+      const storedUserType = getLocalStorage('thinkfirst_userType');
+      if (storedUserType) {
+        setUserTypeState(storedUserType as 'student' | 'parent');
       }
-    }
 
-    let storedUserId = getLocalStorage('thinkfirst_userId');
-    if (!storedUserId) {
-      storedUserId = crypto.randomUUID();
-      setLocalStorage('thinkfirst_userId', storedUserId);
-    }
-    setUserId(storedUserId);
+      const storedUnlocks = getLocalStorage('thinkfirst_dailyUnlocks');
+      if (storedUnlocks) {
+        const data = JSON.parse(storedUnlocks);
+        const today = new Date().toDateString();
+        if (data.date === today) {
+          setDailyUnlockCount(data.count || 0);
+        }
+      }
 
-    const storedNotifications = getLocalStorage('thinkfirst_nudgeNotifications');
-    if (storedNotifications) {
-      setNudgeNotifications(JSON.parse(storedNotifications));
-    }
+      // Try to get user ID from Supabase auth first, fallback to localStorage
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      } else {
+        // Fallback for unauthenticated users (demo mode)
+        let storedUserId = getLocalStorage('thinkfirst_userId');
+        if (!storedUserId) {
+          storedUserId = crypto.randomUUID();
+          setLocalStorage('thinkfirst_userId', storedUserId);
+        }
+        setUserId(storedUserId);
+      }
 
-    const freezeState = getStreakFreezeState();
-    setStreakFreezeState(freezeState);
-    
-    const today = new Date();
-    const lastGrantDate = getLocalStorage('thinkfirst_lastFreezeGrant');
-    const lastGrantMonth = lastGrantDate ? new Date(lastGrantDate).getMonth() : -1;
-    
-    if (lastGrantMonth !== today.getMonth()) {
-      const isPremium = getLocalStorage('thinkfirst_premium') === 'true';
-      const plan = getLocalStorage('thinkfirst_plan') as 'solo' | 'family' | null;
-      const planType = isPremium ? (plan || 'solo') : 'free';
-      const updatedState = grantMonthlyFreezes(freezeState, planType);
-      setStreakFreezeState(updatedState);
-      saveStreakFreezeState(updatedState);
-      setLocalStorage('thinkfirst_lastFreezeGrant', today.toISOString());
-    }
+      const storedNotifications = getLocalStorage('thinkfirst_nudgeNotifications');
+      if (storedNotifications) {
+        setNudgeNotifications(JSON.parse(storedNotifications));
+      }
 
-    setIsHydrated(true);
+      const freezeState = getStreakFreezeState();
+      setStreakFreezeState(freezeState);
+      
+      const today = new Date();
+      const lastGrantDate = getLocalStorage('thinkfirst_lastFreezeGrant');
+      const lastGrantMonth = lastGrantDate ? new Date(lastGrantDate).getMonth() : -1;
+      
+      if (lastGrantMonth !== today.getMonth()) {
+        const isPremium = getLocalStorage('thinkfirst_premium') === 'true';
+        const plan = getLocalStorage('thinkfirst_plan') as 'solo' | 'family' | null;
+        const planType = isPremium ? (plan || 'solo') : 'free';
+        const updatedState = grantMonthlyFreezes(freezeState, planType);
+        setStreakFreezeState(updatedState);
+        saveStreakFreezeState(updatedState);
+        setLocalStorage('thinkfirst_lastFreezeGrant', today.toISOString());
+      }
+
+      setIsHydrated(true);
+    };
+
+    initializeUser();
   }, []);
 
   useEffect(() => {
