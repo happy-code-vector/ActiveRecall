@@ -11,6 +11,14 @@ import {
   saveStreakFreezeState,
   type StreakFreezeState 
 } from '@/utils/streakFreeze';
+import {
+  UserProfile,
+  fetchUserProfile,
+  updateUserProfile,
+  getSubscriptionStatusFromProfile,
+  SubscriptionStatus,
+  PlanType,
+} from '@/utils/supabase/profile';
 
 export interface Evaluation {
   effort_score: number;
@@ -62,6 +70,15 @@ interface AppContextType {
   userType: 'student' | 'parent' | null;
   setUserType: (type: 'student' | 'parent' | null) => void;
   userId: string;
+  isAuthenticated: boolean;
+  
+  // Profile & Subscription (from Supabase)
+  profile: UserProfile | null;
+  subscriptionStatus: SubscriptionStatus;
+  gradeLevel: string;
+  plan: PlanType;
+  refreshProfile: () => Promise<void>;
+  updateProfileField: <K extends keyof UserProfile>(field: K, value: UserProfile[K]) => Promise<boolean>;
   
   // Learning state
   question: string;
@@ -110,6 +127,8 @@ const AppContext = createContext<AppContextType | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [userType, setUserTypeState] = useState<'student' | 'parent' | null>(null);
   const [userId, setUserId] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [question, setQuestion] = useState('');
   const [attempt, setAttempt] = useState('');
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
@@ -126,16 +145,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [streakFreezeState, setStreakFreezeState] = useState<StreakFreezeState | null>(null);
 
-  const setUserType = (type: 'student' | 'parent' | null) => {
+  // Derived values from profile
+  const subscriptionStatus = getSubscriptionStatusFromProfile(profile);
+  const gradeLevel = profile?.grade_level ?? 'college';
+  const plan = profile?.plan ?? 'free';
+
+  // Refresh profile from Supabase
+  const refreshProfile = useCallback(async () => {
+    const profileData = await fetchUserProfile();
+    if (profileData) {
+      setProfile(profileData);
+      setUserTypeState(profileData.user_type);
+    }
+  }, []);
+
+  // Update a single profile field
+  const updateProfileField = useCallback(async <K extends keyof UserProfile>(
+    field: K,
+    value: UserProfile[K]
+  ): Promise<boolean> => {
+    const updated = await updateUserProfile({ [field]: value });
+    if (updated) {
+      setProfile(updated);
+      return true;
+    }
+    return false;
+  }, []);
+
+  const setUserType = useCallback(async (type: 'student' | 'parent' | null) => {
     setUserTypeState(type);
+    if (type && isAuthenticated) {
+      // Sync to Supabase
+      await updateUserProfile({ user_type: type });
+    }
+    // Also keep localStorage for unauthenticated fallback
     if (type) {
       setLocalStorage('thinkfirst_userType', type);
-    } else {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('thinkfirst_userType');
-      }
+    } else if (typeof window !== 'undefined') {
+      localStorage.removeItem('thinkfirst_userType');
     }
-  };
+  }, [isAuthenticated]);
 
   const loadStreak = useCallback(async () => {
     if (!userId) return;
@@ -175,14 +224,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [userId]);
 
-  // Hydrate from localStorage and auth
+  // Hydrate from Supabase auth and profile
   useEffect(() => {
     const initializeUser = async () => {
-      const storedUserType = getLocalStorage('thinkfirst_userType');
-      if (storedUserType) {
-        setUserTypeState(storedUserType as 'student' | 'parent');
+      // Try to get user from Supabase auth
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        setUserId(user.id);
+        setIsAuthenticated(true);
+        
+        // Fetch profile from Supabase
+        const profileData = await fetchUserProfile();
+        if (profileData) {
+          setProfile(profileData);
+          setUserTypeState(profileData.user_type);
+        }
+      } else {
+        // Fallback for unauthenticated users (demo mode)
+        setIsAuthenticated(false);
+        
+        const storedUserType = getLocalStorage('thinkfirst_userType');
+        if (storedUserType) {
+          setUserTypeState(storedUserType as 'student' | 'parent');
+        }
+        
+        let storedUserId = getLocalStorage('thinkfirst_userId');
+        if (!storedUserId) {
+          storedUserId = crypto.randomUUID();
+          setLocalStorage('thinkfirst_userId', storedUserId);
+        }
+        setUserId(storedUserId);
       }
 
+      // Load other localStorage data
       const storedUnlocks = getLocalStorage('thinkfirst_dailyUnlocks');
       if (storedUnlocks) {
         const data = JSON.parse(storedUnlocks);
@@ -190,20 +265,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (data.date === today) {
           setDailyUnlockCount(data.count || 0);
         }
-      }
-
-      // Try to get user ID from Supabase auth first, fallback to localStorage
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-      } else {
-        // Fallback for unauthenticated users (demo mode)
-        let storedUserId = getLocalStorage('thinkfirst_userId');
-        if (!storedUserId) {
-          storedUserId = crypto.randomUUID();
-          setLocalStorage('thinkfirst_userId', storedUserId);
-        }
-        setUserId(storedUserId);
       }
 
       const storedNotifications = getLocalStorage('thinkfirst_nudgeNotifications');
@@ -219,10 +280,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const lastGrantMonth = lastGrantDate ? new Date(lastGrantDate).getMonth() : -1;
       
       if (lastGrantMonth !== today.getMonth()) {
-        const isPremium = getLocalStorage('thinkfirst_premium') === 'true';
-        const plan = getLocalStorage('thinkfirst_plan') as 'solo' | 'family' | null;
-        const planType = isPremium ? (plan || 'solo') : 'free';
-        const updatedState = grantMonthlyFreezes(freezeState, planType);
+        const isPremium = profile?.is_premium ?? getLocalStorage('thinkfirst_premium') === 'true';
+        const planType = profile?.plan ?? (getLocalStorage('thinkfirst_plan') as 'solo' | 'family' | null) ?? 'free';
+        const updatedState = grantMonthlyFreezes(freezeState, isPremium ? planType : 'free');
         setStreakFreezeState(updatedState);
         saveStreakFreezeState(updatedState);
         setLocalStorage('thinkfirst_lastFreezeGrant', today.toISOString());
@@ -234,6 +294,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     initializeUser();
   }, []);
 
+  // Listen for auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            setUserId(user.id);
+            setIsAuthenticated(true);
+            await refreshProfile();
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setProfile(null);
+          setIsAuthenticated(false);
+          // Fallback to localStorage userId
+          let storedUserId = getLocalStorage('thinkfirst_userId');
+          if (!storedUserId) {
+            storedUserId = crypto.randomUUID();
+            setLocalStorage('thinkfirst_userId', storedUserId);
+          }
+          setUserId(storedUserId);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [refreshProfile]);
+
   useEffect(() => {
     if (userId) {
       loadStreak();
@@ -242,7 +330,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      userType, setUserType, userId,
+      userType, setUserType, userId, isAuthenticated,
+      profile, subscriptionStatus, gradeLevel, plan, refreshProfile, updateProfileField,
       question, setQuestion, attempt, setAttempt,
       evaluation, setEvaluation, isRevisionMode, setIsRevisionMode,
       streak, loadStreak, dailyUnlockCount, setDailyUnlockCount,

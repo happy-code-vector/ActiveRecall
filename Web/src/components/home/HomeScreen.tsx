@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Crown, UserCircle, Sparkles, Brain, Atom, Landmark, Lightbulb } from 'lucide-react';
-import { StreakData } from '@/context/AppContext';
+import { useApp } from '@/context/AppContext';
 import { motion } from 'motion/react';
 import { BottomNav } from './BottomNav';
 import { FamilySquadStreakCard } from '../family/FamilySquadStreakCard';
 import { ClipboardPill } from '../shared/ClipboardPill';
 import { useClipboard } from '../../hooks/useClipboard';
-import { getSubscriptionStatus } from '../../utils/subscription';
 import { toast } from 'sonner';
 
 interface HomeScreenProps {
@@ -14,12 +13,9 @@ interface HomeScreenProps {
   onGoToProgress: () => void;
   onGoToHistory: () => void;
   onGoToPricing?: () => void;
-  onGoToParentDashboard?: () => void;
   onGoToProfile?: () => void;
   onGoToTechniques?: () => void;
-  onLogin?: () => void;
   onNudgeMember?: (memberId: string, memberName: string) => void;
-  streak: StreakData;
 }
 
 // Grade-specific example questions
@@ -102,13 +98,10 @@ const STARTER_CHALLENGES = [
   },
 ];
 
-export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onGoToPricing, onGoToParentDashboard, onGoToProfile, onGoToTechniques, onLogin, onNudgeMember, streak }: HomeScreenProps) {
+export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onGoToPricing, onGoToProfile, onGoToTechniques, onNudgeMember }: HomeScreenProps) {
+  const { subscriptionStatus, gradeLevel, plan, isHydrated, streak } = useApp();
   const [questionInput, setQuestionInput] = useState('');
   const [isNewUser, setIsNewUser] = useState(false);
-  const [userType, setUserType] = useState<string | null>(null);
-  const [gradeLevel, setGradeLevel] = useState('college');
-  const [plan, setPlan] = useState<string | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
   
   // Drag scroll for carousel
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -144,24 +137,16 @@ export function HomeScreen({ onStartQuestion, onGoToProgress, onGoToHistory, onG
   
   // Clipboard detection
   const clipboard = useClipboard();
-  
-  // Get subscription status
-  const subscriptionStatus = getSubscriptionStatus();
 
-  // Hydrate from localStorage
-  useEffect(() => {
+  // Check if new user (no history) - still use localStorage for history
+  useState(() => {
     if (typeof window !== 'undefined') {
-      setUserType(localStorage.getItem('thinkfirst_userType'));
-      setGradeLevel(localStorage.getItem('thinkfirst_userGrade') || 'college');
-      setPlan(localStorage.getItem('thinkfirst_plan'));
       const history = localStorage.getItem('thinkfirst_history');
       const hasHistory = history && JSON.parse(history).length > 0;
       setIsNewUser(!hasHistory);
-      setIsHydrated(true);
     }
-  }, []);
+  });
   
-  const isParent = userType === 'parent';
   const EXAMPLE_QUESTIONS = EXAMPLE_QUESTIONS_BY_GRADE[gradeLevel] || EXAMPLE_QUESTIONS_BY_GRADE['college'];
 
   const handleSubmit = (e: React.FormEvent) => {
