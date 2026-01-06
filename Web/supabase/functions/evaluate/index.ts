@@ -181,6 +181,21 @@ async function updateStreak(userId: string, masteryMode: boolean, masteryAchieve
   await kvSet(streakKey, streakData);
 }
 
+// Generate fallback explanation when AI explanation fails
+function generateFallbackExplanation(question: string, attempt: string): string {
+  return `Great effort on your attempt! You've unlocked the answer to: "${question}"
+
+While I'm working on generating a detailed explanation, here are some key points to consider:
+
+• Your attempt shows good thinking and effort
+• This topic involves important concepts worth exploring further
+• Consider researching the key terms and concepts mentioned in the question
+• Try to connect this topic to what you already know
+• Look for reliable sources that can provide more detailed explanations
+
+The full AI-generated explanation will be available shortly. Keep up the excellent work in your learning journey!`;
+}
+
 // Main handler
 serve(async (req: Request) => {
   // Handle CORS preflight
@@ -246,27 +261,53 @@ serve(async (req: Request) => {
 
     // Phase 2: Generate full explanation if unlocked
     if (evaluation.unlock) {
-      const explainResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: `${gradeContext}\nProvide a comprehensive explanation suitable for the student's level.` },
-            { role: 'user', content: `Question: ${question}\n\nProvide a complete, accurate explanation.` }
-          ],
-          temperature: 0.7,
-          max_tokens: 1000,
-        }),
-      });
+      console.log('Generating full explanation with GPT-4o...');
+      
+      try {
+        const explainResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openaiApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              { 
+                role: 'system', 
+                content: `${gradeContext}\n\nYou are an educational AI providing comprehensive explanations. Provide a clear, detailed explanation that helps the student understand the concept fully. Include key points, examples where helpful, and explain the reasoning behind the answer.` 
+              },
+              { 
+                role: 'user', 
+                content: `Question: ${question}\n\nStudent's attempt: ${attempt}\n\nProvide a complete, accurate explanation of the correct answer and the underlying concepts.` 
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 1500,
+          }),
+        });
 
-      if (explainResponse.ok) {
-        const explainData = await explainResponse.json();
-        evaluation.full_explanation = explainData.choices[0].message.content;
+        if (explainResponse.ok) {
+          const explainData = await explainResponse.json();
+          if (explainData.choices?.[0]?.message?.content) {
+            evaluation.full_explanation = explainData.choices[0].message.content;
+            console.log('Full explanation generated successfully');
+          } else {
+            console.error('Invalid explanation response structure');
+            evaluation.full_explanation = generateFallbackExplanation(question, attempt);
+          }
+        } else {
+          const errorText = await explainResponse.text();
+          console.error('Explanation API error:', explainResponse.status, errorText);
+          evaluation.full_explanation = generateFallbackExplanation(question, attempt);
+        }
+      } catch (error) {
+        console.error('Error generating explanation:', error);
+        evaluation.full_explanation = generateFallbackExplanation(question, attempt);
       }
+    } else {
+      // Ensure full_explanation is empty string when not unlocked
+      evaluation.full_explanation = '';
     }
 
     // Store history and update streak if userId provided

@@ -53,6 +53,9 @@ export default function AttemptPage() {
       
       setEvaluation(evalData);
 
+      // Don't automatically navigate - let user go through evaluation page
+      // router.push('/learn/answer');
+
       if (evalData.unlock) {
         await loadStreak();
         try {

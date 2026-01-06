@@ -101,17 +101,19 @@ export function AnswerScreen({
         </div>
 
         {/* Full Explanation */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <p className="text-xs text-gray-500">Complete explanation</p>
+        {evaluation.full_explanation && evaluation.full_explanation.trim().length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <p className="text-xs text-gray-500">Complete explanation</p>
+            </div>
+            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 backdrop-blur-xl rounded-3xl p-6 text-sm text-white/90 border border-purple-500/20 leading-relaxed space-y-3">
+              {evaluation.full_explanation.split('\n\n').map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
+            </div>
           </div>
-          <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 backdrop-blur-xl rounded-3xl p-6 text-sm text-white/90 border border-purple-500/20 leading-relaxed space-y-3">
-            {evaluation.full_explanation.split('\n\n').map((paragraph, i) => (
-              <p key={i}>{paragraph}</p>
-            ))}
-          </div>
-        </div>
+        )}
 
         {/* Level Up Tip - Show when unlocked but scores aren't perfect */}
         {evaluation.level_up_tip && showLevelUpTip && (
