@@ -654,9 +654,29 @@ Database (PostgreSQL + KV Store)
 
 ### 12.4 API Endpoints
 
-**Base URL**: `https://{projectId}.supabase.co/functions/v1/make-server-a0e3c496`
+**Individual Functions**: Each endpoint is deployed as a separate Supabase Edge Function for better scalability and maintainability.
 
-**Evaluation**
+**Base URL**: `https://{projectId}.supabase.co/functions/v1`
+
+**AI Evaluation**
+- `POST /evaluate` - AI evaluation of student attempts
+
+**User Data**
+- `GET /streak/{userId}` - Get user's learning streak
+- `GET /history/{userId}` - Get user's learning history  
+- `GET /progress/{userId}` - Get user's progress statistics
+
+**Gamification**
+- `GET /badges/{userId}` - Get user's earned badges
+- `POST /badges/{userId}/check` - Check and auto-award new badges
+- `POST /badges/{userId}/award` - Award specific badge
+
+**Family Features**
+- `POST /family/generate-invite` - Generate family invite code
+- `POST /family/connect-student` - Connect student to parent
+- `GET /family/children/{parentId}` - Get parent's children
+- `GET /family/parent/{studentId}` - Get student's parent
+- `GET /family/members/{userId}` - Get family members for leaderboard
 - `POST /evaluate`
 - Body: `{ question, attempt, userId, masteryMode, gradeLevel }`
 - Returns: `{ effort_score, understanding_score, copied, what_is_right, what_is_missing, unlock, full_explanation, coach_hint?, level_up_tip? }`

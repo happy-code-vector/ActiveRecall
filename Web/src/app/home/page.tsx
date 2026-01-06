@@ -3,13 +3,14 @@
 import { useRouter } from 'next/navigation';
 import { HomeScreen } from '@/components/home/HomeScreen';
 import { useApp, setLocalStorage } from '@/context/AppContext';
-import { getSubscriptionStatus, incrementQuestionCount } from '@/utils/subscription';
+import { incrementQuestionCount } from '@/utils/supabase/profile';
 
 export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
   const router = useRouter();
   const { 
+    subscriptionStatus,
     streak, 
     setQuestion, 
     setAttempt, 
@@ -20,14 +21,13 @@ export default function HomePage() {
     setNudgeNotifications,
   } = useApp();
 
-  const startNewQuestion = (q: string) => {
-    const status = getSubscriptionStatus();
-    if (!status.canAskQuestions) {
+  const startNewQuestion = async (q: string) => {
+    if (!subscriptionStatus.canAskQuestions) {
       setUpgradePromptFeature('questions');
       return;
     }
-    if (!status.isPremium) {
-      incrementQuestionCount();
+    if (!subscriptionStatus.isPremium) {
+      await incrementQuestionCount();
     }
     setQuestion(q);
     setAttempt('');
@@ -53,11 +53,8 @@ export default function HomePage() {
       onGoToProgress={() => router.push('/progress')}
       onGoToHistory={() => router.push('/history')}
       onGoToPricing={() => router.push('/pricing')}
-      onGoToParentDashboard={() => router.push('/family/dashboard')}
-      streak={streak}
       onGoToProfile={() => router.push('/profile')}
       onGoToTechniques={() => router.push('/techniques')}
-      onLogin={() => router.push('/login')}
       onNudgeMember={handleNudgeMember}
     />
   );
