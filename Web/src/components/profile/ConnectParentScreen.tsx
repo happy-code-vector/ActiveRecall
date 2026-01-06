@@ -99,7 +99,7 @@ export function ConnectParentScreen({
 
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/family/connect-student`,
+        `https://${projectId}.supabase.co/functions/v1/family/connect-student`,
         {
           method: 'POST',
           headers: {

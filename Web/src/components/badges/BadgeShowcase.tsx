@@ -32,7 +32,7 @@ export function BadgeShowcase({ userId }: BadgeShowcaseProps) {
   const loadBadges = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/badges/${userId}`,
+        `https://${projectId}.supabase.co/functions/v1/badges/${userId}`,
         {
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`,

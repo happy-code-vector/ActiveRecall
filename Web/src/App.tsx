@@ -6,6 +6,7 @@ import { GoalSelectionScreen } from './components/onboarding/GoalSelectionScreen
 import { MethodologyScreen } from './components/onboarding/MethodologyScreen';
 import { TryItScreen } from './components/onboarding/TryItScreen';
 import { NotificationPermissionScreen } from './components/onboarding/NotificationPermissionScreen';
+import { ProfileSetupScreen } from './components/onboarding/ProfileSetupScreen';
 // Auth
 import { AccountTypeScreen } from './components/auth/AccountTypeScreen';
 import { UserTypeScreen } from './components/auth/UserTypeScreen';
@@ -56,7 +57,7 @@ import {
 } from './utils/streakFreeze';
 
 
-export type Screen = 'splash' | 'accountType' | 'userType' | 'gradeSelection' | 'goalSelection' | 'methodology' | 'tryIt' | 'notification' | 'home' | 'pricing' | 'parentPlanDetails' | 'parentDashboard' | 'guardianSettings' | 'attempt' | 'evaluation' | 'answer' | 'progress' | 'history' | 'profile' | 'techniques' | 'animations' | 'login' | 'settings' | 'connectParent' | 'addStudent' | 'frictionDemo' | 'weeklyReport' | 'leaderboard' | 'badges';
+export type Screen = 'splash' | 'accountType' | 'userType' | 'gradeSelection' | 'goalSelection' | 'methodology' | 'tryIt' | 'notification' | 'profileSetup' | 'home' | 'pricing' | 'parentPlanDetails' | 'parentDashboard' | 'guardianSettings' | 'attempt' | 'evaluation' | 'answer' | 'progress' | 'history' | 'profile' | 'techniques' | 'animations' | 'login' | 'settings' | 'connectParent' | 'addStudent' | 'frictionDemo' | 'weeklyReport' | 'leaderboard' | 'badges';
 
 export interface Evaluation {
   effort_score: number;
@@ -191,7 +192,7 @@ export default function App() {
   const loadStreak = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/streak/${userId}`,
+        `https://${projectId}.supabase.co/functions/v1/streak/${userId}`,
         {
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`,
@@ -274,7 +275,7 @@ export default function App() {
     // Call AI evaluation
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/evaluate`,
+        `https://${projectId}.supabase.co/functions/v1/evaluate`,
         {
           method: 'POST',
           headers: {
@@ -314,7 +315,7 @@ export default function App() {
         // Check for new badges after successful unlock
         try {
           const badgeResponse = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/badges/${userId}/check`,
+            `https://${projectId}.supabase.co/functions/v1/badges/${userId}/check`,
             {
               method: 'POST',
               headers: {
@@ -430,24 +431,33 @@ export default function App() {
 
   const handleNotificationEnable = () => {
     localStorage.setItem('thinkfirst_notificationEnabled', 'true');
-    // If viewing onboarding from settings, go back to home instead of login
+    // If viewing onboarding from settings, go back to home instead of profile setup
     if (isViewingOnboarding) {
       setIsViewingOnboarding(false);
       setCurrentScreen('home');
     } else {
-      setCurrentScreen('login');
+      setCurrentScreen('profileSetup');
     }
   };
 
   const handleNotificationSkip = () => {
     localStorage.setItem('thinkfirst_notificationEnabled', 'false');
-    // If viewing onboarding from settings, go back to home instead of login
+    // If viewing onboarding from settings, go back to home instead of profile setup
     if (isViewingOnboarding) {
       setIsViewingOnboarding(false);
       setCurrentScreen('home');
     } else {
-      setCurrentScreen('login');
+      setCurrentScreen('profileSetup');
     }
+  };
+
+  const handleProfileSetupComplete = (profileData: { displayName: string; avatarUrl?: string }) => {
+    // Store profile data temporarily for use after signup
+    localStorage.setItem('thinkfirst_pendingDisplayName', profileData.displayName);
+    if (profileData.avatarUrl) {
+      localStorage.setItem('thinkfirst_pendingAvatarUrl', profileData.avatarUrl);
+    }
+    setCurrentScreen('login');
   };
 
   const handleStartTrial = (plan: 'solo' | 'family') => {
@@ -466,13 +476,15 @@ export default function App() {
 
   const handleLogin = () => setCurrentScreen('login');
 
-  const handleLoginSubmit = (_email: string, _password: string) => {
+  const handleLoginSubmit = async (email: string, password: string, mode: 'login' | 'signup') => {
+    // This is a demo handler - in real implementation, this would use AuthContext
     // Mark onboarding as complete when user logs in
     if (!isViewingOnboarding) {
       markOnboardingComplete();
     }
     setIsViewingOnboarding(false);
     setCurrentScreen('home');
+    return { error: null };
   };
 
   const handleSocialLogin = (_provider: 'apple' | 'google') => {
@@ -583,17 +595,21 @@ export default function App() {
         />
       )}
 
+      {currentScreen === 'profileSetup' && (
+        <ProfileSetupScreen
+          onComplete={handleProfileSetupComplete}
+          userType={userType || 'student'}
+        />
+      )}
+
       {currentScreen === 'home' && (
         <HomeScreen
           onStartQuestion={startNewQuestion}
           onGoToProgress={goToProgress}
           onGoToHistory={goToHistory}
           onGoToPricing={goToPricing}
-          onGoToParentDashboard={goToParentDashboard}
-          streak={streak}
           onGoToProfile={goToProfile}
           onGoToTechniques={goToTechniques}
-          onLogin={handleLogin}
           onNudgeMember={handleNudgeMember}
         />
       )}
@@ -784,6 +800,14 @@ export default function App() {
       {currentScreen === 'login' && (
         <LoginScreen
           onSubmit={handleLoginSubmit}
+          onMagicLink={async (email: string) => {
+            console.log('Magic link requested for:', email);
+            return { error: null };
+          }}
+          onForgotPassword={async (email: string) => {
+            console.log('Password reset requested for:', email);
+            return { error: null };
+          }}
           onSocialLogin={handleSocialLogin}
           onRestorePurchases={handleRestorePurchases}
         />

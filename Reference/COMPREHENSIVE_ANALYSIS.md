@@ -334,7 +334,7 @@ Requirements are tougher, but the rewards are worth it."
 // In App.tsx, after evaluation completes:
 const checkNewBadges = async (userId: string) => {
   const response = await fetch(
-    `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/badges/${userId}/check`,
+    `https://${projectId}.supabase.co/functions/v1/badges/${userId}/check`,
     {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${publicAnonKey}` },

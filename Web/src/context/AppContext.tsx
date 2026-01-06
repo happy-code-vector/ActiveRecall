@@ -190,7 +190,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!userId) return;
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/streak/${userId}`,
+        `https://${projectId}.supabase.co/functions/v1/streak/${userId}`,
         { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
       );
       if (response.ok) {

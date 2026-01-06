@@ -41,7 +41,7 @@ export function HistoryScreen({ userId, onBack, onRetry, onGoToHome, onGoToProgr
   const loadHistory = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/history/${userId}`,
+        `https://${projectId}.supabase.co/functions/v1/history/${userId}`,
         {
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`,

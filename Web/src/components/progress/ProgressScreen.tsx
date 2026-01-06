@@ -70,7 +70,7 @@ export function ProgressScreen({ userId, streak, onBack, onGoToHome, onGoToProgr
       const targetUserId = isParent ? selectedChild.id : userId;
       
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/progress/${targetUserId}`,
+        `https://${projectId}.supabase.co/functions/v1/progress/${targetUserId}`,
         {
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`,

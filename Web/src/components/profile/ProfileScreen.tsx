@@ -16,6 +16,8 @@ import {
 import { BottomNav } from '../home/BottomNav';
 import { StreakData } from '@/context/AppContext';
 import { AvatarUploader } from './AvatarUploader';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAuth } from '@/context/AuthContext';
 
 interface ProfileScreenProps {
   onBack: () => void;
@@ -57,22 +59,70 @@ export function ProfileScreen({
   const [plan, setPlan] = useState<'solo' | 'family' | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   
+  // Get real user data from hooks
+  const { user } = useAuth();
+  const { profile, isLoading: profileLoading } = useUserProfile();
+  
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setUserType(localStorage.getItem('thinkfirst_userType') as 'student' | 'parent' | null);
       setIsPremium(localStorage.getItem('thinkfirst_premium') === 'true');
       setPlan(localStorage.getItem('thinkfirst_plan') as 'solo' | 'family' | null);
-      setAvatarUrl(localStorage.getItem('thinkfirst_avatar') || '');
+      
+      // Use profile avatar if available, otherwise fall back to localStorage
+      const profileAvatar = profile?.avatar_url;
+      const localAvatar = localStorage.getItem('thinkfirst_avatar') || '';
+      setAvatarUrl(profileAvatar || localAvatar);
     }
-  }, []);
+  }, [profile]);
   
-  // Mock user data
+  // Get user display data - use real data when available, fallback to demo
+  const getUserDisplayName = () => {
+    if (profile?.display_name) {
+      return profile.display_name;
+    }
+    if (user?.email) {
+      // Extract name from email (e.g., "john.doe@email.com" -> "John D.")
+      const emailName = user.email.split('@')[0];
+      const parts = emailName.split(/[._-]/);
+      if (parts.length >= 2) {
+        const firstName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+        const lastInitial = parts[1].charAt(0).toUpperCase();
+        return `${firstName} ${lastInitial}.`;
+      } else {
+        const name = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+        return name.length > 10 ? name.substring(0, 10) + '...' : name;
+      }
+    }
+    return 'Alex S.'; // Fallback for demo/unauthenticated users
+  };
+
+  const getUserInitials = () => {
+    if (profile?.display_name) {
+      const parts = profile.display_name.split(' ');
+      if (parts.length >= 2) {
+        return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+      }
+      return profile.display_name.substring(0, 2).toUpperCase();
+    }
+    if (user?.email) {
+      const emailName = user.email.split('@')[0];
+      const parts = emailName.split(/[._-]/);
+      if (parts.length >= 2) {
+        return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+      }
+      return emailName.substring(0, 2).toUpperCase();
+    }
+    return 'AS'; // Fallback
+  };
+
+  // User data - mix of real and fallback data
   const userData = {
-    name: 'Alex S.',
-    initials: 'AS',
-    streak: 12,
-    unlocks: 45,
-    avgEffort: 'High',
+    name: getUserDisplayName(),
+    initials: getUserInitials(),
+    streak: streak?.count || 0,
+    unlocks: 45, // TODO: Connect to real unlock count from badges/achievements
+    avgEffort: 'High', // TODO: Connect to real effort analytics
   };
 
   return (
@@ -179,7 +229,13 @@ export function ProfileScreen({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <User className="w-14 h-14 text-white" strokeWidth={2} />
+                      profileLoading ? (
+                        <div className="w-14 h-14 bg-gray-600 rounded-full animate-pulse" />
+                      ) : (
+                        <div className="text-white text-2xl font-bold">
+                          {userData.initials}
+                        </div>
+                      )
                     )}
                   </div>
                 </div>
@@ -213,7 +269,11 @@ export function ProfileScreen({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              {userData.name}
+              {profileLoading ? (
+                <div className="w-24 h-8 bg-gray-700 rounded animate-pulse" />
+              ) : (
+                userData.name
+              )}
             </motion.h1>
           </div>
         </div>
@@ -235,7 +295,11 @@ export function ProfileScreen({
               }}
             >
               <div className="text-white text-xl mb-1" style={{ fontWeight: 700 }}>
-                {userData.streak}
+                {profileLoading ? (
+                  <div className="w-6 h-6 bg-gray-700 rounded animate-pulse mx-auto" />
+                ) : (
+                  userData.streak
+                )}
               </div>
               <div className="text-gray-500 text-[11px]">Streak</div>
             </div>

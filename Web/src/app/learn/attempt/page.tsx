@@ -32,7 +32,7 @@ export default function AttemptPage() {
 
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/evaluate`,
+        `https://${projectId}.supabase.co/functions/v1/evaluate`,
         {
           method: 'POST',
           headers: {
@@ -57,7 +57,7 @@ export default function AttemptPage() {
         await loadStreak();
         try {
           const badgeResponse = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-a0e3c496/badges/${userId}/check`,
+            `https://${projectId}.supabase.co/functions/v1/badges/${userId}/check`,
             {
               method: 'POST',
               headers: {
