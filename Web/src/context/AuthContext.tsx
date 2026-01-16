@@ -23,15 +23,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Session error:', error.message);
+        // Session is invalid or expired
+        setSession(null);
+        setUser(null);
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
       setIsLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event);
+        
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
@@ -41,6 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('User signed in:', session.user.email);
           // Save pending profile data if available
           await savePendingProfileData(session.user.id);
+        }
+        
+        // Handle token expiration
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed successfully');
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
         }
       }
     );

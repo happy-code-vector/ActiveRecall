@@ -228,7 +228,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeUser = async () => {
       // Try to get user from Supabase auth
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (user) {
         setUserId(user.id);
@@ -239,8 +239,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (profileData) {
           setProfile(profileData);
           setUserTypeState(profileData.user_type);
+        } else {
+          console.error('Failed to fetch user profile - session may be invalid');
         }
       } else {
+        // Log if there was an auth error (e.g., expired token)
+        if (userError) {
+          console.error('Auth error:', userError.message);
+        }
         // Fallback for unauthenticated users (demo mode)
         setIsAuthenticated(false);
         
