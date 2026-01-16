@@ -1,0 +1,294 @@
+# Implementation Plan
+
+- [x] 1. Set up testing infrastructure and utilities foundation
+  - [x] 1.1 Install fast-check for property-based testing
+    - Add fast-check to devDependencies
+    - Configure Vitest to work with fast-check
+    - _Requirements: Testing Strategy_
+  - [x] 1.2 Create animation timing constants utility
+    - Create `Web/src/utils/animationTiming.ts` with FAST (150-180ms), STANDARD (220-260ms), SLOW (300-350ms) constants
+    - Export easeInOut curve configuration
+    - _Requirements: 13.1, 13.2, 13.3_
+  - [x]* 1.3 Write property test for animation timing compliance
+    - **Property 20: Animation Duration Compliance**
+    - **Validates: Requirements 13.1-13.3**
+
+- [x] 2. Implement Streak Freeze System
+  - [x] 2.1 Create streak freeze utility module
+    - Create `Web/src/utils/streakFreeze.ts`
+    - Implement `StreakFreezeState` interface
+    - Implement `consumeFreeze()`, `grantMonthlyFreezes()`, `borrowFromFamilyPool()` functions
+    - Implement 3 AM reset boundary calculation
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.6_
+  - [x]* 2.2 Write property test for streak freeze consumption
+    - **Property 1: Streak Freeze Consumption**
+    - **Validates: Requirements 1.1, 1.6**
+  - [x]* 2.3 Write property test for streak freeze grants
+    - **Property 2: Streak Freeze Grant**
+    - **Validates: Requirements 1.2, 1.3**
+  - [x]* 2.4 Write property test for family pool borrowing
+    - **Property 3: Family Freeze Pool Borrowing**
+    - **Validates: Requirements 1.4, 1.5**
+  - [x] 2.5 Integrate streak freeze into App.tsx state management
+    - Add streak freeze state to App component
+    - Connect to localStorage for persistence
+    - _Requirements: 1.1-1.6_
+
+- [x] 3. Checkpoint - Ensure all tests pass
+  - All 45 tests passing
+
+- [x] 4. Implement Complete Badge System
+  - [x] 4.1 Create comprehensive badge definitions
+    - Update `Web/src/utils/badgeDefinitions.ts` with all 20 badges
+    - Define criteria for each badge category (Streaks, Mastery, Milestones)
+    - Include theme colors and icons for each badge
+    - _Requirements: 2.1-2.20_
+  - [x] 4.2 Create badge evaluation utility
+    - Create `Web/src/utils/badgeEvaluator.ts`
+    - Implement `evaluateBadgeCriteria()` function
+    - Implement `checkAndAwardBadges()` function
+    - _Requirements: 2.1-2.20_
+  - [x]* 4.3 Write property test for badge award criteria
+    - **Property 4: Badge Award Criteria**
+    - **Validates: Requirements 2.1-2.20**
+  - [x] 4.4 Update BadgeUnlockModal with 3D animation
+    - Add scaling animation (0% → 110% → 100%)
+    - Add radial glow rotation effect
+    - _Requirements: 2.21_
+  - [x] 4.5 Update BadgesScreen with complete badge grid
+    - Display all 20 badges organized by category
+    - Show progress for locked badges
+    - _Requirements: 2.1-2.20_
+
+- [x] 5. Implement Clipboard Detection
+  - [x] 5.1 Create useClipboard hook
+    - Create `Web/src/hooks/useClipboard.ts`
+    - Implement clipboard text detection on mount
+    - Handle permission errors gracefully
+    - _Requirements: 3.1, 3.3_
+  - [x]* 5.2 Write property test for clipboard detection state
+    - **Property 5: Clipboard Detection State**
+    - **Validates: Requirements 3.1, 3.3**
+  - [x] 5.3 Create ClipboardPill component
+    - Create `Web/src/components/ClipboardPill.tsx`
+    - Display truncated clipboard text
+    - Handle tap to populate input
+    - _Requirements: 3.1, 3.2_
+  - [x]* 5.4 Write property test for clipboard paste action
+    - **Property 6: Clipboard Paste Action**
+    - **Validates: Requirements 3.2**
+  - [x] 5.5 Integrate ClipboardPill into HomeScreen
+    - Add ClipboardPill above input field
+    - Connect to question input state
+    - _Requirements: 3.1, 3.2, 3.3_
+
+- [x] 6. Checkpoint - Ensure all tests pass
+  - All tests passing
+
+- [x] 7. Implement Dynamic Loading States
+  - [x] 7.1 Create EvaluationLoadingState component
+    - Create `Web/src/components/EvaluationLoadingState.tsx`
+    - Implement cycling messages with 1.5s intervals
+    - Add fade transitions between messages
+    - _Requirements: 4.1, 4.2_
+  - [x]* 7.2 Write property test for loading message cycling
+    - **Property 7: Loading Message Cycling**
+    - **Validates: Requirements 4.1, 4.2**
+  - [x] 7.3 Integrate loading states into EvaluationScreen
+    - Replace current loading indicator
+    - Add slide-up animation on response
+    - _Requirements: 4.1, 4.2, 4.3_
+
+- [x] 8. Implement Minimum Viable Attempt Validation
+  - [x] 8.1 Create word count validation utility
+    - Update `Web/src/utils/validation.ts`
+    - Implement `countWords()` function
+    - Implement `validateMinimumWords()` function
+    - _Requirements: 5.1_
+  - [x]* 8.2 Write property test for word count validation
+    - **Property 8: Word Count Validation**
+    - **Validates: Requirements 5.1, 5.3**
+  - [x] 8.3 Add shake animation to submit button
+    - Implement horizontal shake animation (10px)
+    - Trigger on validation failure
+    - _Requirements: 5.2_
+  - [x] 8.4 Add validation toast message
+    - Display "Add a bit more detail so I can understand you."
+    - Use existing toast system
+    - _Requirements: 5.3_
+  - [x] 8.5 Integrate validation into AttemptGate
+    - Disable submit button when < 10 words
+    - Trigger shake and toast on invalid submit attempt
+    - _Requirements: 5.1, 5.2, 5.3_
+
+- [x] 9. Implement Haptic Feedback
+  - [x] 9.1 Create haptics utility module
+    - Create `Web/src/utils/haptics.ts`
+    - Implement `triggerHaptic()` function with pattern support
+    - Handle browser/device compatibility
+    - _Requirements: 6.1-6.4_
+  - [x]* 9.2 Write property test for haptic feedback triggers
+    - **Property 9: Haptic Feedback Triggers**
+    - **Validates: Requirements 6.1-6.4**
+  - [x] 9.3 Integrate haptics into key interactions
+    - Add tick haptic to input typing
+    - Add heavy haptic to unlock animation
+    - Add revving haptic to Mastery Mode toggle
+    - Add warning haptic to validation failure
+    - _Requirements: 6.1, 6.2, 6.3, 6.4_
+
+- [x] 10. Checkpoint - Ensure all tests pass
+  - All tests passing
+
+- [x] 11. Implement Invite Code System
+  - [x] 11.1 Create invite code utility module
+    - Create `Web/src/utils/inviteCode.ts`
+    - Implement `generateInviteCode()` function (format: FAM-XXX)
+    - Implement `validateInviteCode()` function
+    - _Requirements: 7.1, 7.4_
+  - [x]* 11.2 Write property test for invite code format
+    - **Property 10: Invite Code Format**
+    - **Validates: Requirements 7.1**
+  - [x]* 11.3 Write property test for family account linking
+    - **Property 11: Family Account Linking**
+    - **Validates: Requirements 7.3, 7.5**
+  - [x] 11.4 Create JoinFamilyScreen component
+    - Create `Web/src/components/JoinFamilyScreen.tsx`
+    - Add invite code input field
+    - Handle validation and linking
+    - _Requirements: 7.2, 7.3, 7.4_
+  - [x] 11.5 Update ParentDashboard with invite code display
+    - Show generated invite code
+    - Display linked accounts count
+    - _Requirements: 7.1, 7.5_
+
+- [x] 12. Implement Enhanced Guardian Mode
+  - [x] 12.1 Create guardian PIN utility
+    - Create `Web/src/utils/guardianPin.ts`
+    - Implement PIN hashing and verification
+    - Implement PIN storage in localStorage
+    - _Requirements: 8.1, 8.2_
+  - [x]* 12.2 Write property test for guardian PIN protection
+    - **Property 12: Guardian PIN Protection**
+    - **Validates: Requirements 8.1, 8.2**
+  - [x] 12.3 Create GuardianPinModal component
+    - Create `Web/src/components/GuardianPinModal.tsx`
+    - Support PIN creation and verification modes
+    - _Requirements: 8.1, 8.2_
+  - [x] 12.4 Implement Force Mastery Mode
+    - Add toggle to GuardianSettings
+    - Disable Mastery Mode toggle in AttemptGate when forced
+    - _Requirements: 8.3_
+  - [x]* 12.5 Write property test for Force Mastery Mode
+    - **Property 13: Force Mastery Mode**
+    - **Validates: Requirements 8.3**
+  - [x] 12.6 Implement Block Mercy Button
+    - Add toggle to GuardianSettings
+    - Hide "I'm Stuck" option in AttemptGate when blocked
+    - Require PIN for Mercy Modal when guardian mode active
+    - _Requirements: 8.4, 8.5_
+  - [x]* 12.7 Write property test for Block Mercy Button
+    - **Property 14: Block Mercy Button**
+    - **Validates: Requirements 8.4, 8.5**
+
+- [x] 13. Checkpoint - Ensure all tests pass
+  - All 45 tests passing
+
+- [x] 14. Implement Socratic AI Constraints
+  - [x] 14.1 Update evaluation API prompt
+    - Modify system prompt to enforce Socratic questioning
+    - Add constraint to avoid direct answers
+    - Limit feedback to 1-2 sentences
+    - _Requirements: 9.1, 9.2, 9.3_
+  - [x]* 14.2 Write property test for Socratic feedback format
+    - **Property 15: Socratic Feedback Format**
+    - **Validates: Requirements 9.1, 9.3**
+  - [x]* 14.3 Write property test for feedback length constraint
+    - **Property 16: Feedback Length Constraint**
+    - **Validates: Requirements 9.2**
+
+- [x] 15. Implement Dynamic Model Routing
+  - [x] 15.1 Update evaluation API with model routing
+    - Use GPT-4o-mini for Phase 1 (evaluation)
+    - Use GPT-4o for Phase 2 (unlock explanation)
+    - Track family monthly unlock count
+    - _Requirements: 10.1, 10.2, 10.3_
+  - [x]* 15.2 Write property test for evaluation phase model routing
+    - **Property 17: Model Routing - Evaluation Phase**
+    - **Validates: Requirements 10.1**
+  - [x]* 15.3 Write property test for unlock phase model routing
+    - **Property 18: Model Routing - Unlock Phase**
+    - **Validates: Requirements 10.2, 10.3**
+  - [x] 15.4 Add grade level to evaluation request
+    - Include user grade level in API payload (already implemented)
+    - Adjust scoring strictness based on grade
+    - _Requirements: 10.4_
+
+- [x] 16. Implement Nonsense Detection
+  - [x] 16.1 Create nonsense detection utility
+    - Create `Web/src/utils/nonsenseDetection.ts`
+    - Implement keyboard smashing pattern detection
+    - Implement vowel ratio checking
+    - _Requirements: 14.1_
+  - [x]* 16.2 Write property test for nonsense detection
+    - **Property 19: Nonsense Detection**
+    - **Validates: Requirements 14.1, 14.2**
+  - [x] 16.3 Integrate nonsense detection into evaluation flow
+    - Check for nonsense before API call
+    - Return specific error message
+    - Do not count nonsense attempts
+    - _Requirements: 14.1, 14.2_
+
+- [x] 17. Checkpoint - Ensure all tests pass
+  - All 45 tests passing
+
+- [x] 18. Implement Notification System
+  - [x] 18.1 Create notification scheduling utility
+    - Create `Web/src/utils/notifications.ts`
+    - Implement Day 1/Day 2 nudge scheduling
+    - Implement Mastery Mode nudge logic
+    - _Requirements: 11.1, 11.2, 11.3_
+  - [x] 18.2 Implement App Store review trigger
+    - Track successful high-effort unlocks
+    - Trigger review prompt on 3rd+ session
+    - _Requirements: 11.4_
+
+- [x] 19. Implement Paywall Compliance
+  - [x] 19.1 Add compliance links to PricingScreen
+    - Add "Restore Purchases" link (functional)
+    - Add "Terms of Service" link
+    - Add "Privacy Policy" link
+    - _Requirements: 12.1, 12.2, 12.3_
+  - [x] 19.2 Add auto-renewal disclosure
+    - Display disclosure text for Family Plan
+    - _Requirements: 12.4_
+
+- [x] 20. Implement Progress Timeline
+  - [x] 20.1 Create ProgressTimeline component
+    - Create `Web/src/components/ProgressTimeline.tsx`
+    - Implement vertical timeline with day nodes
+    - Style completed days as green, missed as red X, today as pulsing white
+    - _Requirements: 15.1, 15.2, 15.3, 15.4_
+  - [x]* 20.2 Write property test for timeline node rendering
+    - **Property 21: Timeline Node Rendering**
+    - **Validates: Requirements 15.2-15.4**
+  - [x] 20.3 Add milestone badges to timeline
+    - Display badge at every 7-day milestone
+    - _Requirements: 15.5_
+  - [x] 20.4 Integrate ProgressTimeline into ProgressScreen
+    - Replace or enhance current progress display
+    - _Requirements: 15.1-15.5_
+
+- [x] 21. Implement Streak Animation Enhancement
+  - [x] 21.1 Update streak pill animation
+    - Add scale animation (100% → 110% → 100%) over 350ms
+    - Add opacity flash effect
+    - _Requirements: 13.4_
+  - [x] 21.2 Add Mastery Mode heat shimmer particles
+    - Implement particle effect on toggle ON
+    - Duration: 0.5 seconds
+    - _Requirements: 13.5_
+
+- [x] 22. Final Checkpoint - Ensure all tests pass
+  - All 45 tests passing
+
